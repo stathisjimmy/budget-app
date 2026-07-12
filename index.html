@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14180F">
+<title>Προϋπολογισμός</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#14180F; --surface:#1D2317; --surface-2:#28311F; --line:#333D28;
+  --paper:#EDEFE6; --muted:#8C9481;
+  --ochre:#D9A441; --sage:#7FB069; --brick:#D96C4F;
+  --display:'Bricolage Grotesque',system-ui,sans-serif;
+  --body:'Inter',system-ui,sans-serif;
+  --r:20px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  background:var(--ink); color:var(--paper); font-family:var(--body);
+  -webkit-font-smoothing:antialiased; overscroll-behavior-y:none;
+}
+.wrap{max-width:520px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) 16px calc(120px + env(safe-area-inset-bottom))}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+button{font-family:var(--body);cursor:pointer;border:0}
+:focus-visible{outline:2px solid var(--ochre);outline-offset:2px}
+
+/* ---------- Topbar ---------- */
+.top{display:flex;align-items:center;justify-content:space-between;margin:4px 4px 16px}
+.top .month{font-family:var(--display);font-weight:800;font-size:1.35rem;letter-spacing:-.02em}
+.top .year{color:var(--muted);font-weight:600;font-size:.8rem;margin-left:6px}
+.sync{display:flex;align-items:center;gap:7px;font-size:.72rem;color:var(--muted);
+  background:var(--surface);padding:7px 12px;border-radius:999px;font-weight:600}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--sage);flex:none}
+.dot.off{background:var(--brick)} .dot.busy{background:var(--ochre);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.25}}
+
+/* ---------- Hero ---------- */
+.hero{background:var(--surface);border-radius:var(--r);padding:22px 20px 16px;margin-bottom:14px;
+  border:1px solid var(--line)}
+.hero .cap{font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.hero .balance{font-family:var(--display);font-weight:800;font-size:2.9rem;line-height:1.05;
+  letter-spacing:-.035em;margin:6px 0 16px}
+.hero .balance.neg{color:var(--brick)}
+.split{display:flex;gap:10px;margin-bottom:18px}
+.split div{flex:1;background:var(--surface-2);border-radius:13px;padding:11px 13px}
+.split .k{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.split .v{font-size:1.02rem;font-weight:700;margin-top:3px}
+.split .v.in{color:var(--sage)} .split .v.out{color:var(--brick)}
+
+/* Υπογραφή: η καμπύλη του μήνα */
+.strip{display:flex;align-items:flex-end;gap:2px;height:44px}
+.strip i{flex:1;background:var(--line);border-radius:2px 2px 0 0;min-height:2px;
+  transition:height .45s cubic-bezier(.2,.8,.2,1)}
+.strip i.spent{background:linear-gradient(180deg,var(--brick),#8C4630)}
+.strip i.today{background:var(--ochre);box-shadow:0 0 0 1px rgba(217,164,65,.35)}
+.strip i.future{background:#232B1B;height:2px!important}
+.striplbl{display:flex;justify-content:space-between;margin-top:7px;font-size:.65rem;color:var(--muted);font-weight:600}
+
+/* ---------- Λίστα ---------- */
+.sec{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+  font-weight:700;margin:22px 6px 10px}
+.item{display:flex;align-items:center;gap:13px;background:var(--surface);border:1px solid var(--line);
+  border-radius:14px;padding:13px 14px;margin-bottom:8px}
+.item .bul{width:9px;height:34px;border-radius:5px;flex:none;background:var(--brick)}
+.item .bul.income{background:var(--sage)}
+.item .txt{flex:1;min-width:0}
+.item .t1{font-weight:600;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .t2{font-size:.75rem;color:var(--muted);margin-top:2px}
+.item .amt{font-weight:700;font-size:1rem;white-space:nowrap}
+.item .amt.out{color:var(--brick)} .item .amt.in{color:var(--sage)}
+.empty{color:var(--muted);font-size:.88rem;text-align:center;padding:26px 10px;
+  border:1px dashed var(--line);border-radius:14px}
+
+/* ---------- Actions (σταθερά κάτω) ---------- */
+.actions{position:fixed;left:0;right:0;bottom:0;z-index:20;
+  padding:14px 16px calc(14px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,rgba(20,24,15,0) 0%,var(--ink) 34%);
+  display:flex;gap:10px;max-width:520px;margin:0 auto}
+.act{flex:1;display:flex;align-items:center;justify-content:center;gap:9px;
+  padding:16px;border-radius:16px;font-weight:700;font-size:.97rem}
+.act.scan{background:var(--ochre);color:#1B1608;flex:1.5}
+.act.manual{background:var(--surface-2);color:var(--paper);border:1px solid var(--line)}
+.act:active{transform:scale(.98)}
+
+/* ---------- Bottom sheet ---------- */
+.scrim{position:fixed;inset:0;background:rgba(8,10,6,.7);opacity:0;pointer-events:none;
+  transition:.25s;z-index:30;backdrop-filter:blur(2px)}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:31;max-width:520px;margin:0 auto;
+  background:var(--surface);border-radius:26px 26px 0 0;border-top:1px solid var(--line);
+  padding:10px 18px calc(20px + env(safe-area-inset-bottom));
+  transform:translateY(102%);transition:transform .32s cubic-bezier(.2,.9,.25,1);
+  max-height:92vh;overflow-y:auto}
+.sheet.on{transform:translateY(0)}
+.grab{width:38px;height:4px;border-radius:2px;background:var(--line);margin:6px auto 14px}
+.sheet h2{font-family:var(--display);font-weight:800;font-size:1.3rem;letter-spacing:-.02em;margin-bottom:14px}
+
+.seg{display:flex;background:var(--ink);border-radius:999px;padding:4px;margin-bottom:16px}
+.seg button{flex:1;background:transparent;color:var(--muted);border-radius:999px;padding:10px 0;
+  font-weight:700;font-size:.9rem;transition:.15s}
+.seg button.on{background:var(--surface-2);color:var(--paper)}
+
+label{display:block;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);font-weight:700;margin:14px 0 6px}
+input,select{width:100%;padding:14px;font-size:1rem;font-family:var(--body);color:var(--paper);
+  background:var(--ink);border:1.5px solid var(--line);border-radius:13px}
+input::placeholder{color:#5C6355}
+select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%238C9481' stroke-width='2'><path d='M1 1l5 5 5-5'/></svg>");
+  background-repeat:no-repeat;background-position:right 15px center}
+#fAmt{font-family:var(--display);font-weight:800;font-size:1.6rem;letter-spacing:-.02em}
+input:focus,select:focus{border-color:var(--ochre);outline:none}
+
+.thumb{display:none;margin:6px 0 2px;border-radius:14px;overflow:hidden;position:relative;border:1px solid var(--line)}
+.thumb img{width:100%;max-height:150px;object-fit:cover;display:block}
+.thumb .ov{position:absolute;inset:0;background:rgba(20,24,15,.72);display:flex;align-items:center;
+  justify-content:center;gap:9px;font-weight:700;font-size:.9rem;color:var(--ochre)}
+.spin{width:15px;height:15px;border:2px solid rgba(217,164,65,.3);border-top-color:var(--ochre);
+  border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.save{width:100%;margin-top:22px;padding:17px;border-radius:15px;background:var(--ochre);color:#1B1608;
+  font-weight:800;font-size:1rem}
+.save[disabled]{opacity:.5}
+
+/* ---------- Setup ---------- */
+.setup{padding:40px 4px}
+.setup h1{font-family:var(--display);font-weight:800;font-size:1.9rem;letter-spacing:-.03em;margin-bottom:8px}
+.setup p{color:var(--muted);font-size:.92rem;line-height:1.55;margin-bottom:8px}
+
+/* ---------- Toast ---------- */
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));z-index:40;
+  transform:translate(-50%,70px);opacity:0;transition:.25s;
+  background:var(--paper);color:var(--ink);padding:12px 20px;border-radius:999px;
+  font-weight:700;font-size:.86rem;max-width:88%;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.toast.err{background:var(--brick);color:#fff}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<!-- Οθόνη πρώτης ρύθμισης -->
+<div class="wrap setup" id="setup" hidden>
+  <h1>Σύνδεση</h1>
+  <p>Επικόλλησε τη διεύθυνση του Web App από το Apps Script και τον κωδικό σου. Αποθηκεύονται μόνο σε αυτή τη συσκευή.</p>
+  <label for="sUrl">Web app URL</label>
+  <input type="url" id="sUrl" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off">
+  <label for="sTok">Κωδικός εφαρμογής</label>
+  <input type="password" id="sTok" placeholder="APP_TOKEN" autocomplete="off">
+  <button class="save" onclick="saveSetup()">Σύνδεση</button>
+</div>
+
+<!-- Κύρια οθόνη -->
+<div class="wrap" id="app" hidden>
+  <div class="top">
+    <div><span class="month" id="mName">—</span><span class="year" id="mYear"></span></div>
+    <button class="sync" onclick="refresh()" aria-label="Συγχρονισμός">
+      <span class="dot" id="dot"></span><span id="syncTxt">Συγχρονισμένο</span>
+    </button>
+  </div>
+
+  <section class="hero">
+    <div class="cap">Υπόλοιπο μήνα</div>
+    <div class="balance num" id="bal">—</div>
+    <div class="split">
+      <div><div class="k">Έσοδα</div><div class="v in num" id="inc">—</div></div>
+      <div><div class="k">Έξοδα</div><div class="v out num" id="exp">—</div></div>
+    </div>
+    <div class="strip" id="strip" aria-hidden="true"></div>
+    <div class="striplbl"><span>1</span><span id="stripToday"></span><span id="stripEnd"></span></div>
+  </section>
+
+  <div class="sec">Τελευταίες κινήσεις</div>
+  <div id="list"><div class="empty">Καμία κίνηση ακόμη.</div></div>
+</div>
+
+<div class="actions" id="actions" hidden>
+  <button class="act scan" onclick="pickPhoto()">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+      <circle cx="12" cy="13" r="4"/>
+    </svg>
+    Σκάναρε απόδειξη
+  </button>
+  <button class="act manual" onclick="openSheet('expense')">Χειροκίνητα</button>
+</div>
+<input type="file" id="file" accept="image/*" capture="environment" hidden onchange="onPhoto(this)">
+
+<!-- Φόρμα -->
+<div class="scrim" id="scrim" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true">
+  <div class="grab"></div>
+  <h2 id="sheetTitle">Νέα εγγραφή</h2>
+
+  <div class="seg">
+    <button id="tE" class="on" onclick="setType('expense')">Έξοδο</button>
+    <button id="tI" onclick="setType('income')">Έσοδο</button>
+  </div>
+
+  <div class="thumb" id="thumb">
+    <img id="thumbImg" alt="Απόδειξη">
+    <div class="ov" id="thumbOv"><span class="spin"></span>Ανάγνωση απόδειξης…</div>
+  </div>
+
+  <label for="fAmt">Ποσό (€)</label>
+  <input type="number" id="fAmt" inputmode="decimal" step="0.01" min="0" placeholder="0,00">
+
+  <label for="fCat">Κατηγορία</label>
+  <select id="fCat"></select>
+
+  <label for="fDesc">Περιγραφή</label>
+  <input type="text" id="fDesc" placeholder="π.χ. Σκλαβενίτης" autocomplete="off">
+
+  <label for="fDate">Ημερομηνία</label>
+  <input type="date" id="fDate">
+
+  <button class="save" id="saveBtn" onclick="save()">Καταχώρηση</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- Ρυθμίσεις συσκευής ---------- */
+const CFG = {
+  get url(){ return localStorage.getItem('api_url') || ''; },
+  get token(){ return localStorage.getItem('api_token') || ''; },
+  save(u,t){ localStorage.setItem('api_url',u); localStorage.setItem('api_token',t); }
+};
+
+let CATS = {expense:[],income:[]}, TYPE='expense', STATE=null;
+const MONTHS=['Ιανουάριος','Φεβρουάριος','Μάρτιος','Απρίλιος','Μάιος','Ιούνιος','Ιούλιος','Αύγουστος','Σεπτέμβριος','Οκτώβριος','Νοέμβριος','Δεκέμβριος'];
+const eur = n => new Intl.NumberFormat('el-GR',{style:'currency',currency:'EUR',maximumFractionDigits:2}).format(n||0);
+
+/* ---------- API ---------- */
+async function api(action, extra){
+  if(!CFG.url) throw new Error('Δεν έχει ρυθμιστεί σύνδεση.');
+  const res = await fetch(CFG.url, {
+    method:'POST',
+    // text/plain: αποφεύγει το CORS preflight που δεν υποστηρίζει το Apps Script
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(Object.assign({action:action, token:CFG.token}, extra||{})),
+    redirect:'follow'
+  });
+  const j = await res.json();
+  if(!j.ok) throw new Error(j.error || 'Άγνωστο σφάλμα');
+  return j.data;
+}
+
+function status(kind, txt){
+  document.getElementById('dot').className = 'dot ' + kind;
+  document.getElementById('syncTxt').textContent = txt;
+}
+
+/* ---------- Εκκίνηση ---------- */
+function boot(){
+  if(!CFG.url || !CFG.token){ document.getElementById('setup').hidden = false; return; }
+  document.getElementById('app').hidden = false;
+  document.getElementById('actions').hidden = false;
+  document.getElementById('fDate').value = new Date().toISOString().slice(0,10);
+  refresh();
+  flushQueue();
+}
+
+function saveSetup(){
+  const u = document.getElementById('sUrl').value.trim();
+  const t = document.getElementById('sTok').value.trim();
+  if(!u || !t){ toast('Συμπλήρωσε και τα δύο πεδία', true); return; }
+  CFG.save(u,t);
+  document.getElementById('setup').hidden = true;
+  boot();
+}
+
+async function refresh(){
+  status('busy','Συγχρονισμός…');
+  try{
+    const d = await api('init');
+    CATS = d.categories; render(d.summary); renderList(d.recent);
+    status('','Συγχρονισμένο');
+  }catch(e){
+    status('off','Χωρίς σύνδεση');
+    toast(e.message, true);
+  }
+}
+
+/* ---------- Render ---------- */
+function render(s){
+  STATE = s;
+  document.getElementById('mName').textContent = MONTHS[s.month-1];
+  document.getElementById('mYear').textContent = s.year;
+  const b = document.getElementById('bal');
+  b.textContent = eur(s.balance);
+  b.classList.toggle('neg', s.balance < 0);
+  document.getElementById('inc').textContent = eur(s.income);
+  document.getElementById('exp').textContent = eur(s.expense);
+
+  // Η καμπύλη του μήνα: μία μπάρα ανά ημέρα, με σημερινή σε ώχρα
+  const max = Math.max.apply(null, s.daily.concat([1]));
+  const strip = document.getElementById('strip');
+  strip.innerHTML = '';
+  s.daily.forEach((v,i)=>{
+    const bar = document.createElement('i');
+    const day = i+1;
+    if(day > s.today) bar.className = 'future';
+    else if(day === s.today) bar.className = 'today';
+    else if(v > 0) bar.className = 'spent';
+    bar.style.height = (day > s.today ? 2 : Math.max(3, Math.round(v/max*44))) + 'px';
+    bar.title = day + ': ' + eur(v);
+    strip.appendChild(bar);
+  });
+  document.getElementById('stripToday').textContent = 'σήμερα ' + s.today;
+  document.getElementById('stripEnd').textContent = s.daysInMonth;
+}
+
+function renderList(items){
+  const el = document.getElementById('list');
+  if(!items || !items.length){ el.innerHTML = '<div class="empty">Καμία κίνηση ακόμη.</div>'; return; }
+  el.innerHTML = items.map(it=>{
+    const d = it.date.split('-');
+    return '<div class="item">'
+      + '<span class="bul ' + (it.type==='income'?'income':'') + '"></span>'
+      + '<span class="txt"><span class="t1">' + esc(it.description || it.category) + '</span>'
+      + '<span class="t2">' + esc(it.category) + ' · ' + d[2] + '/' + d[1] + '</span></span>'
+      + '<span class="amt num ' + (it.type==='income'?'in':'out') + '">'
+      + (it.type==='income'?'+':'−') + eur(it.amount).replace('€','').trim() + ' €</span>'
+      + '</div>';
+  }).join('');
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- Φόρμα ---------- */
+function openSheet(t){
+  setType(t || 'expense');
+  document.getElementById('fDate').value = new Date().toISOString().slice(0,10);
+  document.getElementById('scrim').classList.add('on');
+  document.getElementById('sheet').classList.add('on');
+}
+function closeSheet(){
+  document.getElementById('scrim').classList.remove('on');
+  document.getElementById('sheet').classList.remove('on');
+  document.getElementById('thumb').style.display = 'none';
+}
+function setType(t){
+  TYPE = t;
+  document.getElementById('tE').classList.toggle('on', t==='expense');
+  document.getElementById('tI').classList.toggle('on', t==='income');
+  const sel = document.getElementById('fCat');
+  sel.innerHTML = '';
+  (t==='expense'?CATS.expense:CATS.income).forEach(c=>{
+    const o = document.createElement('option'); o.value = o.textContent = c; sel.appendChild(o);
+  });
+}
+
+/* ---------- Σκανάρισμα ---------- */
+function pickPhoto(){ document.getElementById('file').click(); }
+
+async function onPhoto(input){
+  const f = input.files && input.files[0];
+  if(!f) return;
+  input.value = '';
+  openSheet('expense');
+
+  const b64 = await toJpeg(f, 1400, .85);
+  const th = document.getElementById('thumb');
+  document.getElementById('thumbImg').src = 'data:image/jpeg;base64,' + b64;
+  th.style.display = 'block';
+  document.getElementById('thumbOv').style.display = 'flex';
+
+  try{
+    const r = await api('scan', {image:b64});
+    if(r.amount) document.getElementById('fAmt').value = r.amount.toFixed(2);
+    if(r.date) document.getElementById('fDate').value = r.date;
+    if(r.merchant) document.getElementById('fDesc').value = r.merchant;
+    if(r.category){
+      const sel = document.getElementById('fCat');
+      if([...sel.options].some(o=>o.value===r.category)) sel.value = r.category;
+    }
+    toast('Έλεγξε τα στοιχεία και καταχώρησε');
+  }catch(e){
+    toast(e.message, true);
+  }finally{
+    document.getElementById('thumbOv').style.display = 'none';
+  }
+}
+
+function toJpeg(file, maxSide, q){
+  return new Promise((res, rej)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const sc = Math.min(1, maxSide/Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width*sc); c.height = Math.round(img.height*sc);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      res(c.toDataURL('image/jpeg', q).split(',')[1]);
+      URL.revokeObjectURL(img.src);
+    };
+    img.onerror = ()=>rej(new Error('Δεν άνοιξε η φωτογραφία.'));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+/* ---------- Καταχώρηση (+ ουρά offline) ---------- */
+async function save(){
+  const entry = {
+    type: TYPE,
+    date: document.getElementById('fDate').value,
+    category: document.getElementById('fCat').value,
+    description: document.getElementById('fDesc').value,
+    amount: document.getElementById('fAmt').value
+  };
+  if(!entry.date){ toast('Βάλε ημερομηνία', true); return; }
+  if(!entry.amount || Number(String(entry.amount).replace(',','.')) <= 0){ toast('Βάλε ποσό', true); return; }
+
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true; btn.textContent = 'Αποθήκευση…';
+
+  try{
+    const r = await api('add', {entry:entry});
+    render(r.summary); renderList(r.recent);
+    status('','Συγχρονισμένο');
+    toast('Καταχωρήθηκε');
+    clearForm(); closeSheet();
+  }catch(e){
+    queue(entry);
+    status('off', pending() + ' σε αναμονή');
+    toast('Χωρίς σύνδεση — θα σταλεί μόλις συνδεθείς');
+    clearForm(); closeSheet();
+  }finally{
+    btn.disabled = false; btn.textContent = 'Καταχώρηση';
+  }
+}
+
+function clearForm(){
+  document.getElementById('fAmt').value = '';
+  document.getElementById('fDesc').value = '';
+}
+
+const QK = 'queue';
+const readQ  = () => JSON.parse(localStorage.getItem(QK) || '[]');
+const writeQ = q => localStorage.setItem(QK, JSON.stringify(q));
+const pending = () => readQ().length;
+function queue(e){ const q = readQ(); q.push(e); writeQ(q); }
+
+async function flushQueue(){
+  let q = readQ();
+  if(!q.length) return;
+  status('busy','Αποστολή ' + q.length + '…');
+  const left = [];
+  for(const e of q){
+    try{ await api('add', {entry:e}); }
+    catch(err){ left.push(e); }
+  }
+  writeQ(left);
+  if(left.length){ status('off', left.length + ' σε αναμονή'); }
+  else { toast('Στάλθηκαν οι εκκρεμείς εγγραφές'); refresh(); }
+}
+window.addEventListener('online', flushQueue);
+
+/* ---------- Toast ---------- */
+let tT;
+function toast(msg, err){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.toggle('err', !!err); t.classList.add('on');
+  clearTimeout(tT); tT = setTimeout(()=>t.classList.remove('on'), 3400);
+}
+
+/* ---------- Service worker ---------- */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=> navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+
+boot();
+</script>
+</body>
+</html>
