@@ -65,13 +65,13 @@ button{font-family:var(--f);cursor:pointer;border:0;color:inherit}
 
 /* ── Ήρωας ── */
 .hero{margin-bottom:30px}
-/* Απόκρυψη ποσών: θολώνουν μόνο τα νούμερα, η δομή μένει ορατή */
+/* Απόκρυψη ποσών: ελαφρύ θόλωμα — αναγνωρίσιμη μορφή, μη αναγνώσιμα νούμερα */
 .hero.hush .bal, .hero.hush .duo .v{
-  filter:blur(11px);
+  filter:blur(5px);
   transition:filter .25s;
   user-select:none;
 }
-.hero.hush .bal{filter:blur(16px)}
+.hero.hush .bal{filter:blur(8px)}
 .kicker{font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);font-weight:400}
 .bal{font-size:4.1rem;font-weight:200;letter-spacing:-.045em;line-height:1;margin:14px 0 22px}
 .bal.neg{color:var(--clay)}
@@ -82,6 +82,33 @@ button{font-family:var(--f);cursor:pointer;border:0;color:inherit}
 .duo .k{font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);font-weight:400}
 .duo .v{font-size:1.75rem;font-weight:200;letter-spacing:-.025em;margin-top:8px}
 .duo .v.in{color:var(--mint)} .duo .v.out{color:var(--clay)}
+
+/* ── Ειδοποίηση χαμηλού υπολοίπου ── */
+.alert{display:none;align-items:center;gap:13px;padding:15px 16px;margin-bottom:20px;
+  border-radius:18px;background:rgba(224,147,124,.08);border:1px solid rgba(224,147,124,.28)}
+.alert.on{display:flex}
+.alert .ai{color:var(--clay);flex:none}
+.alert .at{flex:1;min-width:0}
+.alert .a1{font-size:.95rem;font-weight:400;color:var(--clay)}
+.alert .a2{font-size:.8rem;color:var(--dim);margin-top:3px;font-weight:300;line-height:1.4}
+.alert .ab{flex:none;padding:9px 14px;border-radius:100px;background:var(--clay);color:#1A0C07;
+  font-size:.82rem;font-weight:500;white-space:nowrap}
+
+/* ── Top κατηγορίες ── */
+.podium{display:flex;flex-direction:column;gap:14px;margin-bottom:8px}
+.pod{display:flex;align-items:center;gap:14px;padding:16px;border-radius:18px;
+  border:1px solid var(--hair);background:var(--sur-2);transition:.18s;width:100%;text-align:left}
+.pod:active{border-color:var(--hair-2)}
+.pod .rk{width:26px;height:26px;border-radius:50%;flex:none;display:flex;align-items:center;
+  justify-content:center;font-size:.8rem;font-weight:500;
+  background:var(--faint);color:var(--fg)}
+.pod:first-child .rk{background:var(--amber);color:#0A0904}
+.pod .pi{flex:1;min-width:0}
+.pod .p1{font-size:1.05rem;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pod .p2{font-size:.78rem;color:var(--dim);margin-top:3px;font-weight:300}
+.pod .pa{font-size:1.3rem;font-weight:200;color:var(--clay);white-space:nowrap;letter-spacing:-.02em}
+.meter{height:2px;border-radius:2px;background:var(--clay);opacity:.55;margin-top:8px}
+.arw{color:var(--faint);flex:none}
 
 /* ── Καμπύλη ── */
 .strip{display:flex;align-items:flex-end;gap:3px;height:52px;margin-top:26px}
@@ -286,6 +313,9 @@ input[type=date]{color-scheme:dark}
         <svg id="eyeOpen" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         <svg id="eyeShut" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" hidden><path d="M17.9 17.9A10.6 10.6 0 0 1 12 20C5 20 1 12 1 12a19 19 0 0 1 5.1-5.9M9.9 4.2A10.9 10.9 0 0 1 12 4c7 0 11 8 11 8a19 19 0 0 1-2.2 3.2M9.9 9.9a3 3 0 0 0 4.2 4.2M1 1l22 22"/></svg>
       </button>
+      <button class="tool" id="insBtn" onclick="openInsights()" aria-label="Top κατηγορίες">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V10M9 21V4M15 21v-8M21 21V7"/></svg>
+      </button>
       <button class="tool" id="filtBtn" onclick="openFilter()" aria-label="Φίλτρο κατηγοριών">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg>
         <span class="badge" id="filtBadge" hidden></span>
@@ -295,6 +325,15 @@ input[type=date]{color-scheme:dark}
       </button>
       <button class="tool" onclick="refresh()" aria-label="Συγχρονισμός"><span class="dot" id="dot"></span></button>
     </div>
+  </div>
+
+  <div class="alert" id="alert">
+    <svg class="ai" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+    <span class="at">
+      <span class="a1" id="alertTitle">Χαμηλό υπόλοιπο</span>
+      <span class="a2" id="alertSub"></span>
+    </span>
+    <button class="ab" onclick="openInsights()">Πού πήγαν</button>
   </div>
 
   <div class="fbar" id="fbar"></div>
@@ -408,6 +447,29 @@ input[type=date]{color-scheme:dark}
   <button class="ghost" onclick="clearFilter()">Καθαρισμός φίλτρου</button>
 </div>
 
+<!-- Top κατηγορίες -->
+<div class="sheet" id="insSheet" role="dialog" aria-modal="true">
+  <div class="grab"></div>
+  <h2 id="insTitle">Πού πάνε τα λεφτά</h2>
+  <p class="note" style="margin:-8px 0 22px" id="insSub"></p>
+
+  <span class="lbl">Top 3 κατηγορίες</span>
+  <div class="podium" id="podium"></div>
+
+  <div id="restWrap" hidden>
+    <div class="divider"><hr class="hair" style="flex:1"><span>υπόλοιπες</span><hr class="hair" style="flex:1"></div>
+    <div id="rest"></div>
+  </div>
+
+  <div class="total">
+    <span class="tl">Σύνολο εξόδων μήνα</span>
+    <span class="tv num" id="insTotal">0,00 €</span>
+  </div>
+
+  <button class="ghost" style="margin-top:20px" onclick="enableNotifications()" id="notifBtn">Ενεργοποίηση ειδοποιήσεων</button>
+  <button class="ghost" onclick="closeAll()">Κλείσιμο</button>
+</div>
+
 <!-- Πάγια -->
 <div class="sheet" id="fSheet" role="dialog" aria-modal="true">
   <div class="grab"></div>
@@ -429,7 +491,7 @@ const CFG = {
 const MONTHS = ['Ιανουάριος','Φεβρουάριος','Μάρτιος','Απρίλιος','Μάιος','Ιούνιος','Ιούλιος','Αύγουστος','Σεπτέμβριος','Οκτώβριος','Νοέμβριος','Δεκέμβριος'];
 const MSHORT = ['Ιαν','Φεβ','Μάρ','Απρ','Μάι','Ιούν','Ιούλ','Αύγ','Σεπ','Οκτ','Νοέ','Δεκ'];
 
-let CATS = {expense:[],income:[]}, FIXED = [], ITEMS = [], BYCAT = [];
+let CATS = {expense:[],income:[]}, FIXED = [], ITEMS = [], BYCAT = [], MONTH = null;
 let TYPE = 'expense', CAT = '', IS_FIXED = false;
 let EDIT = null;
 let VIEW = null;
@@ -526,9 +588,107 @@ async function refresh(){
 function paint(d){
   CATS = d.categories; FIXED = d.fixed || [];
   BYCAT = (d.summary && d.summary.byCategory) || [];
+  MONTH = d.month || null;
   render(d.summary);
   renderList(d.recent);
   renderFilterBar();
+  renderAlert();
+}
+
+/* ── Ειδοποίηση χαμηλού υπολοίπου ── */
+function renderAlert(){
+  const el = $('alert');
+  if(!MONTH || !MONTH.low){ el.classList.remove('on'); return; }
+
+  el.classList.add('on');
+  $('alertTitle').textContent = 'Υπόλοιπο ' + eur(MONTH.balance);
+  $('alertSub').textContent = 'Κάτω από το όριο των ' + MONTH.threshold + ' € για αυτόν τον μήνα.';
+  maybeNotify();
+}
+
+/** Τοπική ειδοποίηση Android — μία φορά τον μήνα, όταν ανοίγεις την εφαρμογή. */
+function maybeNotify(){
+  if(!('Notification' in window) || Notification.permission !== 'granted') return;
+  if(!MONTH || !MONTH.low) return;
+  if(localStorage.getItem('notified') === MONTH.label) return;   // στάλθηκε ήδη αυτόν τον μήνα
+
+  const top = (MONTH.top || []).slice(0,3)
+    .map((t,i) => (i+1) + '. ' + t.category + ' — ' + n2(t.amount) + ' €').join('\n');
+
+  navigator.serviceWorker.ready.then(reg=>{
+    reg.showNotification('Χαμηλό υπόλοιπο: ' + eur(MONTH.balance), {
+      body: 'Κάτω από ' + MONTH.threshold + ' €.\n' + top,
+      icon: 'icon-192.png',
+      badge: 'icon-192.png',
+      tag: 'low-balance',
+      vibrate: [80, 40, 80]
+    });
+    localStorage.setItem('notified', MONTH.label);
+  }).catch(()=>{});
+}
+
+async function enableNotifications(){
+  if(!('Notification' in window)){ toast('Η συσκευή δεν υποστηρίζει ειδοποιήσεις', true); return; }
+  if(Notification.permission === 'granted'){
+    localStorage.removeItem('notified');   // επιτρέπει νέα ειδοποίηση
+    maybeNotify();
+    toast('Οι ειδοποιήσεις είναι ήδη ενεργές');
+    return;
+  }
+  const perm = await Notification.requestPermission();
+  if(perm === 'granted'){ toast('Ειδοποιήσεις ενεργές'); maybeNotify(); }
+  else toast('Δεν δόθηκε άδεια για ειδοποιήσεις', true);
+  updateNotifBtn();
+}
+function updateNotifBtn(){
+  const b = $('notifBtn');
+  if(!('Notification' in window)){ b.hidden = true; return; }
+  b.hidden = Notification.permission === 'granted';
+}
+
+/* ── Top κατηγορίες ── */
+function openInsights(){
+  if(!MONTH){ toast('Δεν υπάρχουν δεδομένα ακόμη', true); return; }
+
+  const all = MONTH.byCategory || [];
+  const top = all.slice(0,3);
+  const rest = all.slice(3);
+  const total = MONTH.expense || 0;
+
+  $('insSub').textContent = 'Ανάλυση εξόδων για τον τρέχοντα μήνα. Πάτα μια κατηγορία για να δεις τις κινήσεις της.';
+
+  const max = Math.max.apply(null, top.map(t=>t.amount).concat([1]));
+  $('podium').innerHTML = top.length ? top.map((t,i)=>
+    '<button class="pod" onclick="drillCat(\'' + t.category.replace(/'/g,"\\'") + '\')">'
+    + '<span class="rk">' + (i+1) + '</span>'
+    + '<span class="pi"><span class="p1">' + esc(t.category) + '</span>'
+    + '<span class="p2">' + t.count + ' κινήσεις · ' + Math.round(t.amount/(total||1)*100) + '% των εξόδων</span>'
+    + '<span class="meter" style="width:' + Math.round(t.amount/max*100) + '%"></span></span>'
+    + '<span class="pa num">' + n2(t.amount) + ' €</span>'
+    + '<svg class="arw" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>'
+    + '</button>'
+  ).join('') : '<div class="empty">Κανένα έξοδο αυτόν τον μήνα</div>';
+
+  $('restWrap').hidden = !rest.length;
+  $('rest').innerHTML = rest.map(t=>
+    '<button class="brow bwrap" style="width:100%;background:transparent" onclick="drillCat(\'' + t.category.replace(/'/g,"\\'") + '\')">'
+    + '<span class="bn">' + esc(t.category) + '</span>'
+    + '<span class="bc">' + t.count + '</span>'
+    + '<span class="ba num">' + n2(t.amount) + ' €</span>'
+    + '</button>'
+  ).join('');
+
+  $('insTotal').textContent = n2(total) + ' €';
+  updateNotifBtn();
+  openSheet('insSheet');
+}
+
+/** Πατάς κατηγορία → φιλτράρεται ο τρέχων μήνας πάνω σε αυτήν. */
+function drillCat(c){
+  const n = new Date();
+  VIEW = monthView(n.getFullYear(), n.getMonth());
+  FILTER = [c];
+  closeAll(); refresh();
 }
 
 /* ── Render ── */
@@ -719,7 +879,7 @@ function openEdit(i){
 function openSheet(id){ $('scrim').classList.add('on'); $(id).classList.add('on'); }
 function closeAll(){
   $('scrim').classList.remove('on');
-  ['sheet','pSheet','fSheet','cSheet'].forEach(id=>$(id).classList.remove('on'));
+  ['sheet','pSheet','fSheet','cSheet','insSheet'].forEach(id=>$(id).classList.remove('on'));
   $('thumb').style.display = 'none';
   disarm();
 }
