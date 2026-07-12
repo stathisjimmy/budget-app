@@ -1,5 +1,5 @@
 /* Προϋπολογισμός — service worker (offline app shell) */
-const CACHE = 'proyp-v1';
+const CACHE = 'proyp-v2';   /* v2: νέο UI — καθαρίζει αυτόματα την παλιά cache */
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -16,8 +16,19 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   const req = e.request;
-  // Τα αιτήματα προς το API δεν αποθηκεύονται ποτέ στην cache
   if (req.method !== 'GET' || req.url.indexOf('script.google.com') !== -1) return;
+
+  /* Network-first για το index: παίρνεις πάντα την τελευταία έκδοση όταν έχεις σήμα */
+  if (req.mode === 'navigate') {
+    e.respondWith(
+      fetch(req).then(res => {
+        const copy = res.clone();
+        caches.open(CACHE).then(c => c.put('./index.html', copy));
+        return res;
+      }).catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
 
   e.respondWith(
     caches.match(req).then(hit =>
@@ -27,7 +38,7 @@ self.addEventListener('fetch', e => {
           caches.open(CACHE).then(c => c.put(req, copy));
         }
         return res;
-      }).catch(() => caches.match('./index.html'))
+      })
     )
   );
 });
