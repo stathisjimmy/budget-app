@@ -1,5 +1,5 @@
 /* Προϋπολογισμός — service worker (offline app shell) */
-const CACHE = 'proyp-v5';   /* v5: φίλτρο κατηγοριών */
+const CACHE = 'proyp-v6';   /* v6: διόρθωση παγίων + απόκρυψη ποσών */
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

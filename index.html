@@ -65,6 +65,13 @@ button{font-family:var(--f);cursor:pointer;border:0;color:inherit}
 
 /* ── Ήρωας ── */
 .hero{margin-bottom:30px}
+/* Απόκρυψη ποσών: θολώνουν μόνο τα νούμερα, η δομή μένει ορατή */
+.hero.hush .bal, .hero.hush .duo .v{
+  filter:blur(11px);
+  transition:filter .25s;
+  user-select:none;
+}
+.hero.hush .bal{filter:blur(16px)}
 .kicker{font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);font-weight:400}
 .bal{font-size:4.1rem;font-weight:200;letter-spacing:-.045em;line-height:1;margin:14px 0 22px}
 .bal.neg{color:var(--clay)}
@@ -275,6 +282,10 @@ input[type=date]{color-scheme:dark}
       </button>
     </div>
     <div class="tools">
+      <button class="tool" id="hushBtn" onclick="toggleHush()" aria-label="Απόκρυψη ποσών">
+        <svg id="eyeOpen" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        <svg id="eyeShut" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" hidden><path d="M17.9 17.9A10.6 10.6 0 0 1 12 20C5 20 1 12 1 12a19 19 0 0 1 5.1-5.9M9.9 4.2A10.9 10.9 0 0 1 12 4c7 0 11 8 11 8a19 19 0 0 1-2.2 3.2M9.9 9.9a3 3 0 0 0 4.2 4.2M1 1l22 22"/></svg>
+      </button>
       <button class="tool" id="filtBtn" onclick="openFilter()" aria-label="Φίλτρο κατηγοριών">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg>
         <span class="badge" id="filtBadge" hidden></span>
@@ -288,7 +299,7 @@ input[type=date]{color-scheme:dark}
 
   <div class="fbar" id="fbar"></div>
 
-  <section class="hero">
+  <section class="hero" id="hero">
     <div class="kicker" id="kicker">Υπόλοιπο</div>
     <div class="bal num" id="bal">—</div>
     <div class="duo">
@@ -478,10 +489,25 @@ async function api(action, extra){
 }
 function status(k){ $('dot').className = 'dot ' + k; }
 
+/* ── Απόκρυψη ποσών ── */
+let HUSH = localStorage.getItem('hush') === '1';
+function applyHush(){
+  $('hero').classList.toggle('hush', HUSH);
+  $('hushBtn').classList.toggle('on', HUSH);
+  $('eyeOpen').hidden = HUSH;
+  $('eyeShut').hidden = !HUSH;
+}
+function toggleHush(){
+  HUSH = !HUSH;
+  localStorage.setItem('hush', HUSH ? '1' : '0');
+  applyHush();
+}
+
 /* ── Boot ── */
 function boot(){
   if(!CFG.url || !CFG.token){ $('setup').hidden = false; return; }
   $('app').hidden = false; $('actions').hidden = false;
+  applyHush();
   const n = new Date();
   VIEW = monthView(n.getFullYear(), n.getMonth());
   refresh(); flushQueue();
