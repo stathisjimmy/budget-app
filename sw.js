@@ -1,5 +1,5 @@
 /* Προϋπολογισμός — service worker (offline app shell) */
-const CACHE = 'proyp-v8';   /* v8: αναφορά PDF */
+const CACHE = 'proyp-v9';   /* v9: ανάλυση ημέρας + fit to screen */
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

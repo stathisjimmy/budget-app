@@ -19,20 +19,41 @@
   --f:'Outfit',system-ui,-apple-system,sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%}
+html,body{height:100%;overflow-x:hidden}          /* ποτέ οριζόντια κύλιση */
 body{background:var(--bg);color:var(--fg);font-family:var(--f);font-weight:300;
   -webkit-font-smoothing:antialiased;overscroll-behavior-y:none}
 body::before{content:"";position:fixed;inset:0 0 auto;height:340px;pointer-events:none;z-index:0;
   background:radial-gradient(120% 100% at 50% 0%, rgba(233,196,106,.07) 0%, transparent 62%)}
-.wrap{position:relative;z-index:1;max-width:520px;margin:0 auto;
-  padding:calc(20px + env(safe-area-inset-top)) 20px calc(128px + env(safe-area-inset-bottom))}
+.wrap{position:relative;z-index:1;max-width:520px;margin:0 auto;width:100%;
+  padding:calc(16px + env(safe-area-inset-top)) 18px calc(120px + env(safe-area-inset-bottom))}
+
+/* ── Fit to screen ──
+   Τα μεγέθη ακολουθούν το ΥΨΟΣ της οθόνης (svh) και το πλάτος (vw).
+   Σε μικρό κινητό συρρικνώνονται· σε μεγάλο ανοίγουν. Ποτέ δεν ξεχειλίζουν. */
+@media (max-height: 780px){
+  .wrap{ padding-top:calc(12px + env(safe-area-inset-top)) }
+  .top{ margin-bottom:14px }
+  .bal{ margin:10px 0 16px }
+  .duo>div{ padding:13px 0 }
+  .strip{ margin-top:18px }
+  .sec{ margin-top:26px }
+  .item{ padding:15px 0 }
+  .hero{ margin-bottom:22px }
+}
+@media (max-height: 680px){
+  .strip{ height:44px }
+  .item{ padding:13px 0 }
+  .actions{ padding-top:14px }
+}
 .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
 button{font-family:var(--f);cursor:pointer;border:0;color:inherit}
 :focus-visible{outline:1px solid var(--amber);outline-offset:3px}
 .hair{height:1px;background:var(--hair);border:0}
 
 /* ── Topbar ── */
-.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:8px}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:6px;flex-wrap:nowrap}
+.nav{flex:0 1 auto;min-width:0}
+.period{overflow:hidden;text-overflow:ellipsis}
 .nav{display:flex;align-items:center;gap:2px}
 .arrow{width:34px;height:34px;display:flex;align-items:center;justify-content:center;
   border-radius:50%;background:transparent;color:var(--dim);transition:.18s}
@@ -66,14 +87,16 @@ button{font-family:var(--f);cursor:pointer;border:0;color:inherit}
 /* ── Ήρωας ── */
 .hero{margin-bottom:30px}
 .kicker{font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);font-weight:400}
-.bal{font-size:4.1rem;font-weight:200;letter-spacing:-.045em;line-height:1;margin:14px 0 22px}
+.bal{font-size:clamp(2.5rem, 11.5vw, 4.1rem);font-weight:200;letter-spacing:-.045em;
+  line-height:1;margin:14px 0 22px;white-space:nowrap}
 .bal.neg{color:var(--clay)}
 .bal.sum{color:var(--clay)}
 .duo{display:flex;border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)}
 .duo>div{flex:1;padding:17px 0}
 .duo>div+div{border-left:1px solid var(--hair);padding-left:20px}
 .duo .k{font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);font-weight:400}
-.duo .v{font-size:1.75rem;font-weight:200;letter-spacing:-.025em;margin-top:8px}
+.duo .v{font-size:clamp(1.15rem, 5.4vw, 1.75rem);font-weight:200;letter-spacing:-.025em;
+  margin-top:8px;white-space:nowrap}
 .duo .v.in{color:var(--mint)} .duo .v.out{color:var(--clay)}
 
 /* ── Ειδοποίηση χαμηλού υπολοίπου ── */
@@ -104,14 +127,22 @@ button{font-family:var(--f);cursor:pointer;border:0;color:inherit}
 .arw{color:var(--faint);flex:none}
 
 /* ── Καμπύλη ── */
-.strip{display:flex;align-items:flex-end;gap:3px;height:52px;margin-top:26px}
-.strip i{flex:1;background:var(--faint);border-radius:1px;min-height:1px;
-  transition:height .5s cubic-bezier(.16,1,.3,1)}
-.strip i.spent{background:linear-gradient(180deg,var(--clay),rgba(224,147,124,.18))}
-.strip i.today{background:var(--amber)}
-.strip i.future{background:rgba(255,255,255,.06);height:1px!important}
+/* Κάθε μέρα είναι ΚΟΥΜΠΙ σε όλο το ύψος — μεγάλος στόχος για το δάχτυλο,
+   ακόμα κι όταν η ίδια η μπάρα είναι 2px. */
+.strip{display:flex;align-items:stretch;gap:2px;height:56px;margin-top:26px}
+.col{flex:1;min-width:0;display:flex;align-items:flex-end;padding:0;
+  background:transparent;border-radius:2px;transition:background .15s}
+.col:active{background:rgba(255,255,255,.06)}
+.col.sel{background:rgba(233,196,106,.14)}
+.col i{width:100%;background:var(--faint);border-radius:1px;min-height:1px;
+  transition:height .5s cubic-bezier(.16,1,.3,1), background .15s}
+.col i.spent{background:linear-gradient(180deg,var(--clay),rgba(224,147,124,.18))}
+.col i.today{background:var(--amber)}
+.col i.future{background:rgba(255,255,255,.06);height:1px!important}
+.col.sel i{background:var(--amber)}
 .slbl{display:flex;justify-content:space-between;margin-top:10px;
   font-size:.68rem;color:var(--dim);font-weight:300;letter-spacing:.05em}
+.slbl .hint{color:var(--faint)}
 
 /* ── Ενότητες ── */
 .sec{display:flex;align-items:center;gap:12px;margin:38px 0 4px}
@@ -133,10 +164,10 @@ button{font-family:var(--f);cursor:pointer;border:0;color:inherit}
 .item .tick{width:2px;height:32px;border-radius:2px;flex:none;background:var(--clay);opacity:.85}
 .item .tick.in{background:var(--mint)}
 .item .txt{flex:1;min-width:0}
-.item .t1{font-size:1.1rem;font-weight:400;letter-spacing:-.005em;
+.item .t1{font-size:clamp(.98rem, 4vw, 1.1rem);font-weight:400;letter-spacing:-.005em;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:7px}
 .item .t2{font-size:.86rem;color:var(--dim);margin-top:4px;font-weight:300}
-.item .amt{font-size:1.35rem;font-weight:200;white-space:nowrap;letter-spacing:-.02em}
+.item .amt{font-size:clamp(1.05rem, 4.4vw, 1.35rem);font-weight:200;white-space:nowrap;letter-spacing:-.02em}
 .item .amt.out{color:var(--clay)} .item .amt.in{color:var(--mint)}
 .item .edit{width:36px;height:36px;flex:none;display:flex;align-items:center;justify-content:center;
   border-radius:50%;background:transparent;color:var(--faint);transition:.18s}
@@ -149,10 +180,10 @@ button{font-family:var(--f);cursor:pointer;border:0;color:inherit}
   max-width:520px;margin:0 auto;
   padding:20px 20px calc(20px + env(safe-area-inset-bottom));
   background:linear-gradient(180deg,rgba(0,0,0,0),#000 38%)}
-.act{display:flex;align-items:center;justify-content:center;gap:10px;padding:17px;
+.act{display:flex;align-items:center;justify-content:center;gap:9px;padding:16px 12px;min-width:0;
   border-radius:100px;font-size:.96rem;font-weight:400;transition:transform .12s}
 .act:active{transform:scale(.97)}
-.act.scan{flex:1.6;background:var(--amber);color:#0A0904;font-weight:500}
+.act.scan{flex:1.6;background:var(--amber);color:#0A0904;font-weight:500;white-space:nowrap}
 .act.manual{flex:1;background:transparent;border:1px solid var(--hair-2);color:var(--fg)}
 
 /* ── Sheets ── */
@@ -338,7 +369,7 @@ input[type=date]{color-scheme:dark}
       <div><div class="k" id="k2">Έξοδα</div><div class="v out num" id="v2">—</div></div>
     </div>
     <div class="strip" id="strip" aria-hidden="true"></div>
-    <div class="slbl"><span id="sFrom"></span><span id="sTo"></span></div>
+    <div class="slbl"><span id="sFrom"></span><span class="hint">πάτα μια μέρα</span><span id="sTo"></span></div>
   </section>
 
   <div id="breakWrap" hidden>
@@ -460,6 +491,24 @@ input[type=date]{color-scheme:dark}
 
   <button class="ghost" style="margin-top:20px" onclick="enableNotifications()" id="notifBtn">Ενεργοποίηση ειδοποιήσεων</button>
   <button class="ghost" onclick="closeAll()">Κλείσιμο</button>
+</div>
+
+<!-- Ανάλυση ημέρας -->
+<div class="sheet" id="dSheet" role="dialog" aria-modal="true">
+  <div class="grab"></div>
+  <h2 id="dTitle">—</h2>
+
+  <div class="total" style="border-top:0;border-bottom:1px solid var(--hair);margin:0 0 8px;padding-top:0">
+    <span class="tl">Έξοδα ημέρας</span>
+    <span class="tv num" id="dTotal">0,00 €</span>
+  </div>
+
+  <div id="dCats"></div>
+
+  <div class="sec" style="margin-top:24px"><span>Κινήσεις</span><span class="cnt" id="dCnt"></span><hr class="hair"></div>
+  <div id="dList"></div>
+
+  <button class="ghost" style="margin-top:20px" onclick="closeAll()">Κλείσιμο</button>
 </div>
 
 <!-- Αναφορά -->
@@ -825,16 +874,26 @@ function render(s){
   const strip = $('strip');
   strip.innerHTML = '';
   const start = new Date(s.from);
+
   s.daily.forEach((v,i)=>{
-    const bar = document.createElement('i');
+    const d = new Date(start); d.setDate(d.getDate() + i);
+    const dISO = iso(d.getFullYear(), d.getMonth(), d.getDate());
     const future = s.todayIdx >= 0 && i > s.todayIdx;
+
+    // Ολόκληρη η στήλη είναι κουμπί — μεγάλος στόχος για το δάχτυλο
+    const col = document.createElement('button');
+    col.className = 'col';
+    col.setAttribute('aria-label', pad(d.getDate()) + '.' + pad(d.getMonth()+1) + ' — ' + eur(v));
+    col.onclick = ()=> openDay(dISO);
+
+    const bar = document.createElement('i');
     if(future) bar.className = 'future';
     else if(i === s.todayIdx) bar.className = 'today';
     else if(v > 0) bar.className = 'spent';
-    bar.style.height = (future ? 1 : Math.max(2, Math.round(v/max*52))) + 'px';
-    const d = new Date(start); d.setDate(d.getDate() + i);
-    bar.title = pad(d.getDate()) + '.' + pad(d.getMonth()+1) + ' — ' + eur(v);
-    strip.appendChild(bar);
+    bar.style.height = (future ? 1 : Math.max(2, Math.round(v/max*100))) + '%';
+
+    col.appendChild(bar);
+    strip.appendChild(col);
   });
 
   const f = s.from.split('-'), t = s.to.split('-');
@@ -842,6 +901,57 @@ function render(s){
   $('sTo').textContent = t[2] + '.' + t[1];
 
   renderBreakdown(filtered);
+}
+
+/* ── Ανάλυση ημέρας ── */
+const WDAYS = ['Κυριακή','Δευτέρα','Τρίτη','Τετάρτη','Πέμπτη','Παρασκευή','Σάββατο'];
+
+function openDay(dISO){
+  // Τα δεδομένα είναι ΗΔΗ εδώ από το τελευταίο init — μηδέν αίτημα δικτύου
+  const day = ITEMS.filter(it => it.date === dISO);
+  const exp = day.filter(it => it.type === 'expense');
+  const inc = day.filter(it => it.type === 'income');
+  const total = exp.reduce((a,it) => a + it.amount, 0);
+
+  const d = new Date(dISO);
+  $('dTitle').textContent = WDAYS[d.getDay()] + ' ' + d.getDate() + '.' + pad(d.getMonth()+1);
+  $('dTotal').textContent = n2(total) + ' €';
+
+  // Σύνολα ανά κατηγορία μέσα στη μέρα
+  const byCat = {};
+  exp.forEach(it => byCat[it.category] = (byCat[it.category] || 0) + it.amount);
+  const cats = Object.keys(byCat)
+    .map(k => ({category:k, amount:byCat[k]}))
+    .sort((a,b) => b.amount - a.amount);
+
+  const cmax = Math.max.apply(null, cats.map(c=>c.amount).concat([1]));
+  $('dCats').innerHTML = cats.map(c =>
+    '<div class="brow bwrap">'
+    + '<span class="bn">' + esc(c.category) + '</span>'
+    + '<span class="ba num">' + n2(c.amount) + ' €</span>'
+    + '<span class="bar" style="width:' + Math.round(c.amount/cmax*100) + '%"></span>'
+    + '</div>'
+  ).join('');
+
+  // Οι κινήσεις της ημέρας, με κουμπί επεξεργασίας που δείχνει στο σωστό item
+  $('dCnt').textContent = day.length ? day.length : '';
+  $('dList').innerHTML = day.length ? day.map(it=>{
+    const idx = ITEMS.indexOf(it);
+    return '<div class="item">'
+      + '<span class="tick ' + (it.type==='income'?'in':'') + '"></span>'
+      + '<span class="txt">'
+        + '<span class="t1">' + esc(it.description || it.category) + (it.fixed ? PIN : '') + '</span>'
+        + '<span class="t2">' + esc(it.category) + '</span>'
+      + '</span>'
+      + '<span class="amt num ' + (it.type==='income'?'in':'out') + '">'
+        + (it.type==='income'?'+':'−') + n2(it.amount) + ' €</span>'
+      + '<button class="edit" onclick="closeAll();openEdit(' + idx + ')" aria-label="Επεξεργασία">' + PEN + '</button>'
+    + '</div>';
+  }).join('')
+  : '<div class="empty">Καμία κίνηση αυτή τη μέρα</div>';
+
+  if(inc.length && !exp.length) $('dTotal').textContent = '0,00 €';
+  openSheet('dSheet');
 }
 
 /* Ανάλυση ανά κατηγορία — εμφανίζεται μόνο όταν υπάρχει φίλτρο */
@@ -983,7 +1093,7 @@ function openEdit(i){
 function openSheet(id){ $('scrim').classList.add('on'); $(id).classList.add('on'); }
 function closeAll(){
   $('scrim').classList.remove('on');
-  ['sheet','pSheet','fSheet','cSheet','insSheet','rSheet'].forEach(id=>$(id).classList.remove('on'));
+  ['sheet','pSheet','fSheet','cSheet','insSheet','rSheet','dSheet'].forEach(id=>$(id).classList.remove('on'));
   $('thumb').style.display = 'none';
   disarm();
 }
