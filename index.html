@@ -719,6 +719,34 @@ function printHtml(html){
 }
 function status(k){ $('dot').className = 'dot ' + k; }
 
+/* ── Τοπικό cache: stale-while-revalidate ──
+ *
+ * Το Apps Script έχει cold start ~1s που δεν εξαφανίζεται. Αλλά ο χρήστης δεν
+ * χρειάζεται να τον περιμένει: δείχνουμε ΑΜΕΣΩΣ ό,τι είδαμε τελευταία φορά,
+ * και ανανεώνουμε στο παρασκήνιο. Η οθόνη γεμίζει σε 0ms αντί για 5s.
+ */
+const SNAP_MAX = 8;   // πόσες περιόδους κρατάμε
+
+function snapKey(){
+  return 'snap:' + VIEW.from + '|' + VIEW.to + '|' + FILTER.slice().sort().join(',');
+}
+function snapRead(){
+  try{ return JSON.parse(localStorage.getItem(snapKey()) || 'null'); }
+  catch(e){ return null; }
+}
+function snapWrite(d){
+  try{
+    localStorage.setItem(snapKey(), JSON.stringify(d));
+
+    // Κράτα λίστα κλειδιών και πέταξε τα παλιά — το localStorage έχει όριο
+    const keys = JSON.parse(localStorage.getItem('snapKeys') || '[]')
+                   .filter(k => k !== snapKey());
+    keys.push(snapKey());
+    while(keys.length > SNAP_MAX) localStorage.removeItem(keys.shift());
+    localStorage.setItem('snapKeys', JSON.stringify(keys));
+  }catch(e){ /* γεμάτο localStorage — δεν είναι κρίσιμο */ }
+}
+
 /* ── Boot ── */
 function boot(){
   if(!CFG.url || !CFG.token){ $('setup').hidden = false; return; }
@@ -734,9 +762,22 @@ function saveSetup(){
 }
 async function refresh(){
   $('pLabel').textContent = periodLabel(VIEW);
+
+  // 1) ΑΜΕΣΩΣ: ό,τι ξέρουμε ήδη για αυτή την περίοδο
+  const cached = snapRead();
+  if(cached) paint(cached);
+
+  // 2) ΣΤΟ ΠΑΡΑΣΚΗΝΙΟ: η αλήθεια από το Sheet
   status('busy');
-  try{ paint(await api('init')); status(''); }
-  catch(e){ status('off'); toast(e.message, true); }
+  try{
+    const d = await api('init');
+    paint(d);
+    snapWrite(d);
+    status('');
+  }catch(e){
+    status('off');
+    if(!cached) toast(e.message, true);   // αν δείχνουμε ήδη κάτι, μη χαλάς την οθόνη
+  }
 }
 function paint(d){
   CATS = d.categories; FIXED = d.fixed || [];
@@ -1193,7 +1234,7 @@ async function save(){
   try{
     const d = EDIT ? await api('update', {target: EDIT, entry: entry})
                    : await api('add',    {entry: entry});
-    paint(d); status('');
+    paint(d); snapWrite(d); status('');
     toast(EDIT ? 'Αποθηκεύτηκε' : 'Καταχωρήθηκε');
     closeAll();
   }catch(e){
@@ -1228,7 +1269,8 @@ async function doDelete(){
   const b = $('delBtn');
   b.disabled = true; b.textContent = 'Διαγραφή…';
   try{
-    paint(await api('delete', {target: EDIT}));
+    const d = await api('delete', {target: EDIT});
+    paint(d); snapWrite(d);
     toast('Διαγράφηκε');
     closeAll();
   }catch(e){ toast(e.message, true); }
