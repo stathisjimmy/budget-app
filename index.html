@@ -272,6 +272,30 @@ input[type=date]{color-scheme:dark}
 .divider{display:flex;align-items:center;gap:12px;margin:24px 0 18px}
 .divider span{font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
 
+/* ── Μενού ── */
+.menu{display:flex;flex-direction:column;gap:2px}
+.mrow{display:flex;align-items:center;gap:15px;width:100%;text-align:left;
+  padding:16px 4px;background:transparent;border-bottom:1px solid var(--hair);transition:.15s}
+.mrow:active{background:var(--sur-2)}
+.mrow .mi{width:38px;height:38px;flex:none;display:flex;align-items:center;justify-content:center;
+  border-radius:12px;background:var(--sur-2);color:var(--fg)}
+.mrow .mt{flex:1;min-width:0}
+.mrow .mt1{display:block;font-size:1.05rem;font-weight:400}
+.mrow .mt2{display:block;font-size:.8rem;color:var(--dim);margin-top:2px;font-weight:300;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mrow .marw{color:var(--faint);flex:none}
+
+/* ── Ανάλυση εβδομάδας ── */
+.wbar{display:flex;align-items:center;gap:12px;padding:11px 0}
+.wbar .wn{width:88px;flex:none;font-size:.92rem;font-weight:300}
+.wbar .wn.top{color:var(--amber);font-weight:400}
+.wbar .wt{flex:1;height:8px;border-radius:4px;background:var(--sur-2);overflow:hidden;position:relative}
+.wbar .wf{position:absolute;left:0;top:0;bottom:0;border-radius:4px;
+  background:linear-gradient(90deg,rgba(224,147,124,.35),var(--clay))}
+.wbar .wf.top{background:linear-gradient(90deg,rgba(233,196,106,.4),var(--amber))}
+.wbar .wv{width:78px;flex:none;text-align:right;font-size:.92rem;font-weight:300;
+  color:var(--clay);font-variant-numeric:tabular-nums}
+
 /* ── Πλοήγηση ημέρας ── */
 .dnav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:20px}
 .dnav .dt{flex:1;min-width:0;text-align:center}
@@ -343,18 +367,9 @@ input[type=date]{color-scheme:dark}
       </button>
     </div>
     <div class="tools">
-      <button class="tool" id="repBtn" onclick="openReport()" aria-label="Αναφορά PDF">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-      </button>
-      <button class="tool" id="insBtn" onclick="openInsights()" aria-label="Top κατηγορίες">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V10M9 21V4M15 21v-8M21 21V7"/></svg>
-      </button>
-      <button class="tool" id="filtBtn" onclick="openFilter()" aria-label="Φίλτρο κατηγοριών">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg>
+      <button class="tool" id="menuBtn" onclick="openMenu()" aria-label="Μενού">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
         <span class="badge" id="filtBadge" hidden></span>
-      </button>
-      <button class="tool" onclick="openFixed()" aria-label="Πάγια">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 2v6M12 8l4 4v3H8v-3l4-4zM12 15v7"/></svg>
       </button>
       <button class="tool" onclick="refresh()" aria-label="Συγχρονισμός"><span class="dot" id="dot"></span></button>
     </div>
@@ -533,6 +548,55 @@ input[type=date]{color-scheme:dark}
   <button class="ghost" style="margin-top:20px" onclick="closeAll()">Κλείσιμο</button>
 </div>
 
+<!-- Μενού -->
+<div class="sheet" id="mSheet" role="dialog" aria-modal="true">
+  <div class="grab"></div>
+  <h2>Μενού</h2>
+  <div class="menu">
+    <button class="mrow" onclick="closeAll();openFilter()">
+      <span class="mi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg></span>
+      <span class="mt"><span class="mt1">Φίλτρο κατηγοριών</span><span class="mt2" id="mFilt">Όλες οι κατηγορίες</span></span>
+      <svg class="marw" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+    <button class="mrow" onclick="closeAll();openInsights()">
+      <span class="mi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V10M9 21V4M15 21v-8M21 21V7"/></svg></span>
+      <span class="mt"><span class="mt1">Top κατηγορίες</span><span class="mt2">Πού πάνε τα λεφτά</span></span>
+      <svg class="marw" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+    <button class="mrow" onclick="closeAll();openWeek()">
+      <span class="mi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
+      <span class="mt"><span class="mt1">Ανάλυση εβδομάδας</span><span class="mt2">Ποιες μέρες ξοδεύεις πιο πολύ</span></span>
+      <svg class="marw" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+    <button class="mrow" onclick="closeAll();openFixed()">
+      <span class="mi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 2v6M12 8l4 4v3H8v-3l4-4zM12 15v7"/></svg></span>
+      <span class="mt"><span class="mt1">Πάγια έξοδα</span><span class="mt2" id="mFix">Διαχείριση</span></span>
+      <svg class="marw" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+    <button class="mrow" onclick="closeAll();openReport()">
+      <span class="mi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></span>
+      <span class="mt"><span class="mt1">Αναφορά PDF</span><span class="mt2">Αποθήκευση ή εκτύπωση</span></span>
+      <svg class="marw" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+  </div>
+  <button class="ghost" style="margin-top:20px" onclick="closeAll()">Κλείσιμο</button>
+</div>
+
+<!-- Ανάλυση εβδομάδας -->
+<div class="sheet" id="wSheet" role="dialog" aria-modal="true">
+  <div class="grab"></div>
+  <h2>Ανάλυση εβδομάδας</h2>
+  <p class="note" style="margin:-8px 0 20px" id="wSub"></p>
+
+  <span class="lbl">Έξοδα ανά ημέρα εβδομάδας</span>
+  <div id="wBars" style="margin-bottom:26px"></div>
+
+  <span class="lbl">Μέρες με τα περισσότερα έξοδα</span>
+  <div id="wDays"></div>
+
+  <button class="ghost" style="margin-top:22px" onclick="closeAll()">Κλείσιμο</button>
+</div>
+
 <!-- Αναφορά -->
 <div class="sheet" id="rSheet" role="dialog" aria-modal="true">
   <div class="grab"></div>
@@ -579,7 +643,7 @@ const CFG = {
 const MONTHS = ['Ιανουάριος','Φεβρουάριος','Μάρτιος','Απρίλιος','Μάιος','Ιούνιος','Ιούλιος','Αύγουστος','Σεπτέμβριος','Οκτώβριος','Νοέμβριος','Δεκέμβριος'];
 const MSHORT = ['Ιαν','Φεβ','Μάρ','Απρ','Μάι','Ιούν','Ιούλ','Αύγ','Σεπ','Οκτ','Νοέ','Δεκ'];
 
-let CATS = {expense:[],income:[]}, FIXED = [], ITEMS = [], BYCAT = [], MONTH = null;
+let CATS = {expense:[],income:[]}, FIXED = [], ITEMS = [], BYCAT = [], MONTH = null, SUMMARY = null;
 let TYPE = 'expense', CAT = '', IS_FIXED = false;
 let EDIT = null;
 let VIEW = null;
@@ -804,11 +868,63 @@ async function refresh(){
 function paint(d){
   CATS = d.categories; FIXED = d.fixed || [];
   BYCAT = (d.summary && d.summary.byCategory) || [];
+  SUMMARY = d.summary || null;
   MONTH = d.month || null;
   render(d.summary);
   renderList(d.recent);
   renderFilterBar();
   renderAlert();
+}
+
+/* ── Μενού ── */
+function openMenu(){
+  // Ενημέρωσε τις υπο-ετικέτες με την τρέχουσα κατάσταση
+  $('mFilt').textContent = FILTER.length
+    ? FILTER.length + (FILTER.length === 1 ? ' κατηγορία' : ' κατηγορίες')
+    : 'Όλες οι κατηγορίες';
+  $('mFix').textContent = FIXED.length
+    ? FIXED.length + (FIXED.length === 1 ? ' πάγιο' : ' πάγια')
+    : 'Κανένα πάγιο';
+  openSheet('mSheet');
+}
+
+/* ── Ανάλυση εβδομάδας ── */
+function openWeek(){
+  if(!SUMMARY || !SUMMARY.weekday){ toast('Δεν υπάρχουν δεδομένα', true); return; }
+
+  $('wSub').textContent = periodLabel(VIEW) + (FILTER.length ? ' · φιλτραρισμένο' : '');
+
+  // Δευτέρα-πρώτα (πιο φυσικό οπτικά), αλλά τα δεδομένα είναι 0=Κυριακή
+  const order = [1,2,3,4,5,6,0];
+  const wd = SUMMARY.weekday;
+  const max = Math.max.apply(null, wd.map(d=>d.amount).concat([1]));
+  const topAmount = Math.max.apply(null, wd.map(d=>d.amount).concat([0]));
+
+  $('wBars').innerHTML = order.map(i=>{
+    const d = wd[i];
+    const isTop = d.amount > 0 && d.amount === topAmount;
+    return '<div class="wbar">'
+      + '<span class="wn' + (isTop?' top':'') + '">' + WDAYS[i] + '</span>'
+      + '<span class="wt"><span class="wf' + (isTop?' top':'') + '" style="width:'
+        + Math.round(d.amount/max*100) + '%"></span></span>'
+      + '<span class="wv">' + n2(d.amount) + ' €</span>'
+      + '</div>';
+  }).join('');
+
+  // Οι συγκεκριμένες μέρες με τα περισσότερα έξοδα
+  const days = (SUMMARY.heaviestDays || []).slice(0,5);
+  const dmax = Math.max.apply(null, days.map(d=>d.amount).concat([1]));
+  $('wDays').innerHTML = days.length ? days.map(d=>{
+    const dt = new Date(d.date);
+    return '<button class="brow bwrap" style="width:100%;background:transparent" '
+      + 'onclick="closeAll();openDay(\'' + d.date + '\')">'
+      + '<span class="bn">' + WDAYS[d.weekday] + ' ' + dt.getDate() + '.' + pad(dt.getMonth()+1) + '</span>'
+      + '<span class="ba num">' + n2(d.amount) + ' €</span>'
+      + '<span class="bar" style="width:' + Math.round(d.amount/dmax*100) + '%"></span>'
+      + '</button>';
+  }).join('') : '<div class="empty">Κανένα έξοδο αυτή την περίοδο</div>';
+
+  openSheet('wSheet');
 }
 
 /* ── Ειδοποίηση χαμηλού υπολοίπου ── */
@@ -911,11 +1027,14 @@ function drillCat(c){
 function render(s){
   const filtered = !!s.filtered;
 
-  $('kicker').textContent = filtered ? 'Σύνολο επιλεγμένων κατηγοριών' : 'Υπόλοιπο';
+  $('kicker').textContent = filtered ? 'Σύνολο επιλεγμένων κατηγοριών'
+    : (s.carryover !== undefined ? 'Διαθέσιμο υπόλοιπο' : 'Υπόλοιπο');
   const b = $('bal');
-  b.classList.toggle('neg', !filtered && s.balance < 0);
+  const shown = filtered ? s.expense
+    : (s.runningBalance !== undefined ? s.runningBalance : s.balance);
+  b.classList.toggle('neg', !filtered && shown < 0);
   b.classList.toggle('sum', filtered);
-  b.textContent = eur(filtered ? s.expense : s.balance);
+  b.textContent = eur(shown);
 
   if(filtered){
     $('k1').textContent = 'Κινήσεις';
@@ -925,11 +1044,11 @@ function render(s){
     $('v2').textContent = eur(s.expenseAll);
     $('v2').className = 'v out num';
   }else{
-    $('k1').textContent = 'Έσοδα';
+    $('k1').textContent = 'Έσοδα μήνα';
     $('v1').textContent = eur(s.income);
     $('v1').className = 'v in num';
-    $('k2').textContent = 'Έξοδα';
-    $('v2').textContent = eur(s.expense);
+    $('k2').textContent = 'Έξοδα μήνα';
+    $('v2').textContent = eur(s.expenseAll !== undefined ? s.expenseAll : s.expense);
     $('v2').className = 'v out num';
   }
 
@@ -1094,7 +1213,7 @@ function renderList(items){
 function renderFilterBar(){
   const bar = $('fbar');
   const badge = $('filtBadge');
-  $('filtBtn').classList.toggle('on', FILTER.length > 0);
+  $('menuBtn').classList.toggle('on', FILTER.length > 0);
 
   if(!FILTER.length){
     bar.classList.remove('on'); bar.innerHTML = '';
@@ -1184,7 +1303,7 @@ function openEdit(i){
 function openSheet(id){ $('scrim').classList.add('on'); $(id).classList.add('on'); }
 function closeAll(){
   $('scrim').classList.remove('on');
-  ['sheet','pSheet','fSheet','cSheet','insSheet','rSheet','dSheet'].forEach(id=>$(id).classList.remove('on'));
+  ['sheet','pSheet','fSheet','cSheet','insSheet','rSheet','dSheet','mSheet','wSheet'].forEach(id=>$(id).classList.remove('on'));
   $('thumb').style.display = 'none';
   CUR_DAY = null;
   [...$('strip').children].forEach(col => col.classList.remove('sel'));   // σβήσε την επιλογή
