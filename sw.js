@@ -1,5 +1,5 @@
 /* Προϋπολογισμός — service worker (offline app shell) */
-const CACHE = 'proyp-v18';   /* v18: ανθεκτικό paint — σφάλμα σύνοψης δεν κόβει πια τις κινήσεις */
+const CACHE = 'proyp-v18b';  /* v18b: διάταξη κονσόλας σε desktop + οθόνη διαγνωστικών */
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

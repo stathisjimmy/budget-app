@@ -410,70 +410,123 @@ input[type=date]{color-scheme:dark}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
 /* ══════════════════════════════════════════════════════════════════════
-   DESKTOP (v17)
-   Το κινητό είναι η βάση· εδώ μόνο ό,τι χρειάζεται μια μεγάλη οθόνη.
-   Κάτω από 1000px τίποτα από αυτά δεν ισχύει — η .cols είναι block και
-   η σειρά μένει ίδια: υπόλοιπο → ανά κατηγορία → κινήσεις.
+   DESKTOP — διάταξη κονσόλας (v18)
+   Ίδια παλέτα, εντελώς άλλη διάταξη: μόνιμη πλαϊνή στήλη πλοήγησης,
+   πίνακες αντί για ροή, και modals με δικό τους πλέγμα.
+   Κάτω από 1080px ή σε οθόνη αφής, τίποτα από αυτά δεν ισχύει.
    ══════════════════════════════════════════════════════════════════════ */
 
 .cols{display:block}
+.fb{display:block}
 
-@media (min-width:1000px) and (pointer:fine){
+@media (min-width:1080px) and (pointer:fine){
 
-  /* ── Πλάτος και δύο στήλες ── */
-  #app.wrap{max-width:1220px;padding:34px 40px 132px}
-  .cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.02fr);
-    column-gap:46px;align-items:start}
+  html{font-size:17px}
+
+  /* ── Η πλαϊνή στήλη: το ίδιο #mSheet, μόνιμα ανοιχτό ── */
+  #mSheet{position:fixed;left:0;top:0;bottom:0;width:272px;height:100vh;
+    max-height:none;max-width:none;margin:0;
+    transform:none;opacity:1;pointer-events:auto;
+    border:0;border-right:1px solid var(--hair);border-radius:0;
+    background:var(--sur);padding:30px 14px 20px;overflow-y:auto;z-index:26;
+    transition:none}
+  #mSheet h2{font-size:.64rem;letter-spacing:.24em;text-transform:uppercase;
+    color:var(--faint);font-weight:400;padding:0 12px;margin-bottom:20px}
+  #mSheet .menu{gap:2px}
+  #mSheet .mrow{border-radius:13px;padding:12px;border:0}
+  #mSheet .mrow .mt2{font-size:.7rem}
+  #mSheet .marw{display:none}
+  #mSheet>.ghost{display:none}
+  #menuBtn{display:none}
+  .scrim{left:272px}
+
+  /* ── Κύρια περιοχή ── */
+  #app.wrap{margin-left:272px;max-width:1380px;padding:30px 44px 130px}
+  .top{position:sticky;top:0;z-index:5;margin:-30px -44px 26px;padding:20px 44px;
+    background:rgba(0,0,0,.85);backdrop-filter:blur(16px);
+    border-bottom:1px solid var(--hair)}
+  .period{font-size:1.02rem}
+
+  /* ── Πίνακες αντί για ελεύθερη ροή ── */
+  .cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.04fr);
+    column-gap:34px;align-items:start}
   .colA,.colB{min-width:0}
+  .hero,#breakWrap,.colB{background:var(--sur);border:1px solid var(--hair);
+    border-radius:22px;padding:26px 24px}
+  .hero{margin-bottom:24px}
+  #breakWrap{margin-bottom:0}
+  #breakWrap>.sec,.colB>.sec{margin-top:0}
+  .colB{padding-bottom:14px}
 
-  /* Η δεξιά στήλη ευθυγραμμίζεται οπτικά με το «Υπόλοιπο», όχι με το ταβάνι */
-  .colB>.sec:first-child{margin-top:6px}
+  .bal{font-size:clamp(3.2rem,4.6vw,4.4rem)}
+  .duo{gap:38px;margin-top:22px}
+  .duo .v{font-size:1.3rem}
+  .strip{height:118px;margin-top:30px}
 
-  /* ── Κεφαλίδα ── */
-  .top{margin-bottom:26px}
-  .period{font-size:1rem}
-
-  /* ── Ήρωας: υπάρχει χώρος, ας τον πάρει ── */
-  .hero{margin-bottom:34px}
-  .bal{font-size:clamp(3rem,4.4vw,4.1rem)}
-  .duo{gap:34px}
-  .strip{height:104px;margin-top:32px}
-  .slbl .hint{opacity:.55}
-
-  /* ── Κινήσεις: η λίστα έχει το δικό της ύψος, δεν σέρνει τη σελίδα ── */
-  #list{max-height:calc(100vh - 250px);overflow-y:auto;padding-right:6px}
-  #list::-webkit-scrollbar{width:7px}
+  #list{max-height:calc(100vh - 300px);overflow-y:auto;margin-right:-8px;padding-right:8px}
+  #list::-webkit-scrollbar{width:8px}
   #list::-webkit-scrollbar-thumb{background:var(--hair-2);border-radius:4px}
   #list::-webkit-scrollbar-track{background:transparent}
+  .item{padding:15px 0}
+  .item .t1{font-size:1rem}
 
-  /* ── Τα sheets γίνονται κεντραρισμένα παράθυρα ── */
-  .sheet{left:50%;right:auto;bottom:auto;top:50%;
-    width:min(580px,90vw);max-width:none;margin:0;
-    border:1px solid var(--hair);border-radius:26px;
-    padding:30px 30px 30px;max-height:86vh;
-    transform:translate(-50%,-48%) scale(.97);opacity:0;pointer-events:none;
-    transition:transform .3s cubic-bezier(.16,1,.3,1),opacity .22s ease}
+  /* ── Modals: πλατιά παράθυρα με δικό τους πλέγμα ── */
+  .sheet{left:calc(50% + 136px);right:auto;bottom:auto;top:50%;
+    width:min(720px,84vw);max-width:none;margin:0;
+    border:1px solid var(--hair-2);border-radius:24px;
+    padding:34px 36px 34px;max-height:88vh;
+    box-shadow:0 40px 90px rgba(0,0,0,.6);
+    transform:translate(-50%,-48%) scale(.98);opacity:0;pointer-events:none;
+    transition:transform .28s cubic-bezier(.16,1,.3,1),opacity .2s ease}
   .sheet.on{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto}
   .grab{display:none}
-  .sheet h2{margin-top:0}
+  .sheet h2{margin-top:0;font-size:1.7rem;margin-bottom:22px}
+  .sheet .lbl{font-size:.66rem;letter-spacing:.2em}
 
-  /* Οι οθόνες με πολλά δεδομένα θέλουν παραπάνω πλάτος */
-  #qSheet,#wSheet,#rSheet{width:min(760px,92vw)}
-  #mSheet{width:min(480px,90vw)}
+  #qSheet,#wSheet,#rSheet,#insSheet{width:min(940px,90vw)}
+  #dSheet,#gSheet{width:min(680px,84vw)}
 
-  /* ── Μπάρα ενεργειών: πλωτό πλήκτρο, όχι λωρίδα πλάτους οθόνης ── */
-  .actions{left:50%;right:auto;transform:translateX(-50%);
-    max-width:none;width:auto;background:none;
-    padding:0 0 30px}
-  .actions::before{content:'';position:absolute;inset:-10px -10px 20px;
-    border-radius:100px;background:rgba(10,10,10,.82);
-    border:1px solid var(--hair);backdrop-filter:blur(14px);z-index:-1}
-  .act{padding:15px 28px}
+  /* Η φόρμα καταχώρησης σε δύο στήλες */
+  #sheet{width:min(780px,86vw)}
+  #sheet>*{grid-column:1/-1}
+  #sheet{display:grid;grid-template-columns:1fr 1fr;column-gap:30px;align-items:start}
+  #sheet .fb-amt{grid-column:1}
+  #sheet .fb-date{grid-column:2}
+  #sheet .fb-desc .field,#sheet .fb-date .field,#sheet .fb-amt{margin-bottom:0}
+  #sheet .amtbox input{font-size:2.4rem}
+  #sheet .chips{margin-bottom:6px}
+  #sheet .seg{margin-bottom:6px}
+  #sheet .save{margin-top:10px}
 
-  /* ── Ρύθμιση ── */
-  .wrap.setup{max-width:460px;padding-top:16vh}
+  /* Πλατιά στοιχεία μέσα στα modals */
+  .range{gap:16px}
+  .chip{padding:10px 16px;font-size:.86rem}
+  .brow{padding:14px 0}
+  .st{padding:11px 0;font-size:.94rem}
+  .wdet{padding:22px 20px 20px}
+  .qsv{font-size:2.5rem}
+  .qduo{gap:14px}
+  .menu .mrow{padding:15px 14px}
 
-  /* ── Ποντίκι: υπάρχει hover, ας φανεί ── */
+  /* Η στατιστική εβδομάδας: μπάρες και λεπτομέρεια δίπλα-δίπλα */
+  #wBody{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    column-gap:30px;align-items:start}
+  #wBody>*{grid-column:1/-1}
+  #wBody #wBars,#wBody #wWarn{grid-column:1}
+  #wBody #wDetail{grid-column:2;grid-row:span 6;margin-top:0}
+  #wDetail:empty{display:none}
+
+  /* ── Πλωτό κουμπί, κεντραρισμένο στη ΔΙΑΘΕΣΙΜΗ περιοχή ── */
+  .actions{left:calc(50% + 136px);right:auto;transform:translateX(-50%);
+    max-width:none;width:auto;background:none;padding:0 0 28px}
+  .actions::before{content:'';position:absolute;inset:-11px -11px 17px;
+    border-radius:100px;background:rgba(12,12,12,.86);
+    border:1px solid var(--hair-2);backdrop-filter:blur(16px);z-index:-1}
+  .act{padding:16px 30px;font-size:1rem}
+
+  .wrap.setup{max-width:520px;padding-top:14vh;margin-left:auto}
+
+  /* ── Ποντίκι ── */
   .item:hover,.brow:hover,.mrow:hover,.wday:hover,.fline:hover,.qit:hover,
   .wbar.wtap:hover{background:var(--sur-2)}
   .chip:hover{border-color:var(--hair-2)}
@@ -483,10 +536,9 @@ input[type=date]{color-scheme:dark}
   .mrow,.item,.brow,.chip,.tool,.arrow{transition:background .16s,border-color .16s}
 }
 
-/* Πολύ φαρδιές οθόνες: τρίτη στήλη δεν χρειάζεται, αλλά ας μη χαθεί το κείμενο */
-@media (min-width:1500px) and (pointer:fine){
-  #app.wrap{max-width:1340px}
-  .cols{column-gap:58px}
+@media (min-width:1600px) and (pointer:fine){
+  #app.wrap{max-width:1560px}
+  .cols{column-gap:44px}
 }
 
 </style>
@@ -595,20 +647,28 @@ input[type=date]{color-scheme:dark}
     <img id="thumbImg" alt="">
     <div class="ov" id="thumbOv"><span class="spin"></span>Ανάγνωση…</div>
   </div>
-  <span class="lbl">Ποσό</span>
-  <div class="amtbox">
-    <input type="number" id="fAmt" inputmode="decimal" step="0.01" min="0" placeholder="0">
-    <span class="cur">€</span>
+  <div class="fb fb-amt">
+    <span class="lbl">Ποσό</span>
+    <div class="amtbox">
+      <input type="number" id="fAmt" inputmode="decimal" step="0.01" min="0" placeholder="0">
+      <span class="cur">€</span>
+    </div>
   </div>
-  <span class="lbl">Κατηγορία</span>
-  <div class="chips" id="chips"></div>
-  <div class="field">
-    <span class="lbl">Περιγραφή</span>
-    <input type="text" id="fDesc" placeholder="προαιρετικά" autocomplete="off">
+  <div class="fb fb-cat">
+    <span class="lbl">Κατηγορία</span>
+    <div class="chips" id="chips"></div>
   </div>
-  <div class="field">
-    <span class="lbl">Ημερομηνία</span>
-    <input type="date" id="fDate">
+  <div class="fb fb-desc">
+    <div class="field">
+      <span class="lbl">Περιγραφή</span>
+      <input type="text" id="fDesc" placeholder="προαιρετικά" autocomplete="off">
+    </div>
+  </div>
+  <div class="fb fb-date">
+    <div class="field">
+      <span class="lbl">Ημερομηνία</span>
+      <input type="date" id="fDate">
+    </div>
   </div>
   <div class="toggle" id="fixRow">
     <div class="tx">
@@ -740,6 +800,11 @@ input[type=date]{color-scheme:dark}
       <span class="mt"><span class="mt1">Αναζήτηση</span><span class="mt2">Κινήσεις και τζίρος ανά κατηγορία ή περιγραφή</span></span>
       <svg class="marw" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
     </button>
+    <button class="mrow" onclick="closeAll();openDiag()">
+      <span class="mi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/><path d="M12 8v5M12 16h.01"/></svg></span>
+      <span class="mt"><span class="mt1">Διαγνωστικά</span><span class="mt2" id="mDiag">Κατάσταση σύνδεσης και δεδομένων</span></span>
+      <svg class="marw" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
     <button class="mrow" onclick="closeAll();openFilter()">
       <span class="mi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg></span>
       <span class="mt"><span class="mt1">Φίλτρο κατηγοριών</span><span class="mt2" id="mFilt">Όλες οι κατηγορίες</span></span>
@@ -772,6 +837,16 @@ input[type=date]{color-scheme:dark}
     </button>
   </div>
   <button class="ghost" style="margin-top:20px" onclick="closeAll()">Κλείσιμο</button>
+</div>
+
+<!-- Διαγνωστικά -->
+<div class="sheet" id="gSheet" role="dialog" aria-modal="true">
+  <div class="grab"></div>
+  <h2>Διαγνωστικά</h2>
+  <p class="note" style="margin:-8px 0 20px">Τι ακριβώς γύρισε το backend την τελευταία φορά. Στείλε αυτά αν κάτι δεν παίζει.</p>
+  <div id="gBody"></div>
+  <button class="ghost" style="margin-top:18px" onclick="copyDiag()">Αντιγραφή</button>
+  <button class="ghost" onclick="closeAll()">Κλείσιμο</button>
 </div>
 
 <!-- Αναζήτηση -->
@@ -1174,10 +1249,12 @@ async function refresh(){
   status('busy');
   try{
     const d = await api('init');
+    LASTRAW = d;
     paint(d);
     snapWrite(d);
     status('');
   }catch(e){
+    LASTERR = e.message;
     status('off');
     if(!cached) toast(e.message, true);   // αν δείχνουμε ήδη κάτι, μη χαλάς την οθόνη
   }
@@ -1198,18 +1275,84 @@ function paint(d){
   try{ renderFilterBar(); }catch(e){ fail.push('φίλτρο: ' + e.message); }
   try{ renderAlert(); }catch(e){ fail.push('ειδοποίηση: ' + e.message); }
 
+  try{ syncMenuLabels(); }catch(e){}
+
   if(fail.length){
+    LASTERR = fail.join(' | ');
     console.error('[Προϋπολογισμός] αποτυχία σχεδίασης:', fail);
     toast(fail[0], true);
   }
 }
 
 /* ── Μενού ── */
-function openMenu(){
-  // Ενημέρωσε τις υπο-ετικέτες με την τρέχουσα κατάσταση
+/* ── Διαγνωστικά (v18) ──
+   Χωρίς αυτά, ένα «δεν φέρνει κινήσεις» σημαίνει μαντεψιά. Εδώ φαίνεται
+   ΑΚΡΙΒΩΣ τι ζητήθηκε, τι γύρισε, και πού κόλλησε. */
+
+let LASTRAW = null;    /* η τελευταία απάντηση του init, ωμή */
+let LASTERR = null;    /* το τελευταίο σφάλμα, με stack */
+
+function diagLines(){
+  const d = LASTRAW;
+  const s = d && d.summary;
+  const host = (()=>{ try{ return new URL(CFG.url).host + (CFG.url.endsWith('/exec') ? ' /exec' : ' ⚠ ΔΕΝ τελειώνει σε /exec'); }
+                      catch(e){ return CFG.url ? '⚠ άκυρο URL' : '⚠ κενό'; } })();
+  return [
+    ['Frontend', 'v18'],
+    ['Backend URL', host],
+    ['Κωδικός', CFG.token ? 'ορισμένος (' + CFG.token.length + ' χαρακτ.)' : '⚠ ΚΕΝΟΣ'],
+    ['Περίοδος', VIEW ? (VIEW.from + ' → ' + VIEW.to) : '⚠ άγνωστη'],
+    ['Φίλτρο', FILTER.length ? FILTER.join(', ') : 'κανένα'],
+    ['— Απάντηση init —', ''],
+    ['Ήρθε απάντηση;', d ? 'ναι' : '⚠ ΟΧΙ — δεν ολοκληρώθηκε κλήση'],
+    ['Κατηγορίες', d && d.categories ? ((d.categories.expense||[]).length + ' εξόδων, ' + (d.categories.income||[]).length + ' εσόδων') : '⚠ λείπουν'],
+    ['recent (κινήσεις)', d ? (Array.isArray(d.recent) ? d.recent.length : '⚠ δεν είναι πίνακας: ' + typeof d.recent) : '—'],
+    ['summary', s ? 'υπάρχει' : '⚠ λείπει'],
+    ['summary.count', s ? String(s.count) : '—'],
+    ['summary.from/to', s ? ((s.from || '⚠κενό') + ' → ' + (s.to || '⚠κενό')) : '—'],
+    ['summary.expense', s ? String(s.expense) : '—'],
+    ['summary.income', s ? String(s.income) : '—'],
+    ['carryover (v12+)', s ? (s.carryover !== undefined ? 'ναι' : '⚠ ΟΧΙ — παλιό deployment') : '—'],
+    ['weekstats (v13+)', s && s.weekday ? 'ναι' : '⚠ ΟΧΙ — παλιό deployment'],
+    ['— Οθόνη —', ''],
+    ['ITEMS στη μνήμη', String(ITEMS.length)],
+    ['Γραμμές στη λίστα', String(document.querySelectorAll('#list .item').length)],
+    ['Τελευταίο σφάλμα', LASTERR || 'κανένα']
+  ];
+}
+
+function openDiag(){
+  $('gBody').innerHTML = diagLines().map(r=>{
+    if(!r[1]) return '<div class="lbl" style="margin-top:18px">' + esc(r[0].replace(/—/g,'').trim()) + '</div>';
+    const warn = /⚠/.test(r[1]);
+    return '<div class="st"><span class="sk">' + esc(r[0]) + '</span>'
+      + '<span class="sv' + (warn ? ' up' : '') + '">' + esc(r[1]) + '</span></div>';
+  }).join('');
+  openSheet('gSheet');
+}
+
+function copyDiag(){
+  const txt = diagLines().filter(r => r[1]).map(r => r[0] + ': ' + r[1]).join('\n');
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(()=>toast('Αντιγράφηκε')).catch(()=>toast('Δεν έγινε αντιγραφή', true));
+  }else{
+    toast('Ο browser δεν επιτρέπει αντιγραφή', true);
+  }
+}
+
+/* Οι υπο-ετικέτες του μενού. Ξεχωριστά από το openMenu(), γιατί σε desktop
+   το μενού είναι μόνιμα ορατό ως πλαϊνή στήλη και δεν «ανοίγει» ποτέ. */
+function syncMenuLabels(){
   $('mFilt').textContent = FILTER.length
     ? FILTER.length + (FILTER.length === 1 ? ' κατηγορία' : ' κατηγορίες')
     : 'Όλες οι κατηγορίες';
+  $('mFix').textContent = FIXED.length
+    ? FIXED.length + (FIXED.length === 1 ? ' πάγιο' : ' πάγια')
+    : 'Κανένα πάγιο';
+  const d = LASTRAW;
+  $('mDiag').textContent = d
+    ? ((Array.isArray(d.recent) ? d.recent.length : 0) + ' κινήσεις από το backend')
+    : 'Καμία απάντηση ακόμη';
   try{
     const wc = JSON.parse(localStorage.getItem('wcfg') || 'null');
     if(wc && wc.from && wc.to){
@@ -1217,11 +1360,9 @@ function openMenu(){
       $('mWeeks').textContent = dd + ' μέρες · ' + Math.round(dd/7) + ' εβδομάδες';
     }
   }catch(e){}
-  $('mFix').textContent = FIXED.length
-    ? FIXED.length + (FIXED.length === 1 ? ' πάγιο' : ' πάγια')
-    : 'Κανένα πάγιο';
-  openSheet('mSheet');
 }
+
+function openMenu(){ syncMenuLabels(); openSheet('mSheet'); }
 
 /* ── Ανάλυση εβδομάδας: η γρήγορη οθόνη ──
    Δουλεύει ΜΟΝΟ με ό,τι έχει ήδη φέρει το τελευταίο init — μηδέν αίτημα δικτύου.
@@ -2369,7 +2510,7 @@ function openEdit(i){
 function openSheet(id){ $('scrim').classList.add('on'); $(id).classList.add('on'); }
 function closeAll(){
   $('scrim').classList.remove('on');
-  ['sheet','pSheet','fSheet','cSheet','insSheet','rSheet','dSheet','mSheet','wSheet','aSheet','qSheet'].forEach(id=>$(id).classList.remove('on'));
+  ['sheet','pSheet','fSheet','cSheet','insSheet','rSheet','dSheet','mSheet','wSheet','aSheet','qSheet','gSheet'].forEach(id=>$(id).classList.remove('on'));
   $('thumb').style.display = 'none';
   CUR_DAY = null;
   [...$('strip').children].forEach(col => col.classList.remove('sel'));   // σβήσε την επιλογή
@@ -2607,6 +2748,7 @@ if('serviceWorker' in navigator){
 /* Οποιοδήποτε σφάλμα ξεφύγει, να λέει ΠΟΥ έγινε. Χωρίς αυτό, το μόνο που
    βλέπει ο χρήστης είναι «Cannot read properties of undefined». */
 window.addEventListener('error', function(e){
+  LASTERR = e.message + ' @' + (e.filename || '').split('/').pop() + ':' + e.lineno;
   console.error('[Προϋπολογισμός v18]', e.message,
     (e.filename || '').split('/').pop() + ':' + e.lineno, e.error && e.error.stack);
 });
