@@ -1,5 +1,5 @@
 /* Προϋπολογισμός — service worker (offline app shell) */
-const CACHE = 'proyp-v14';   /* v14: ανάλυση κάθε επιλεγμένης ημέρας εβδομάδας μέσα στο εύρος */
+const CACHE = 'proyp-v17';   /* v17: layout δύο στηλών σε υπολογιστή */
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
