@@ -981,6 +981,7 @@ function monthView(y,m){ return {mode:'month', y:y, m:m, from:iso(y,m,1), to:iso
 function rangeView(f,t){ return {mode:'range', from:f, to:t}; }
 function periodLabel(v){
   if(v.mode === 'month') return MONTHS[v.m] + ' ' + v.y;
+  if(!v.from || !v.to) return '—';
   const f = v.from.split('-'), t = v.to.split('-');
   return f[2] + '.' + f[1] + ' – ' + t[2] + '.' + t[1];
 }
@@ -1182,14 +1183,25 @@ async function refresh(){
   }
 }
 function paint(d){
-  CATS = d.categories; FIXED = d.fixed || [];
+  CATS = d.categories || {expense:[],income:[]};
+  FIXED = d.fixed || [];
   BYCAT = (d.summary && d.summary.byCategory) || [];
   SUMMARY = d.summary || null;
   MONTH = d.month || null;
-  render(d.summary);
-  renderList(d.recent);
-  renderFilterBar();
-  renderAlert();
+
+  /* Κάθε κομμάτι σε δικό του try: αν σκάσει η σύνοψη, οι ΚΙΝΗΣΕΙΣ πρέπει
+     να εμφανιστούν ούτως ή άλλως. Πριν, ένα σφάλμα στο render() σταματούσε
+     όλη τη σειρά και η λίστα έμενε άδεια χωρίς καμία εξήγηση. */
+  const fail = [];
+  try{ if(d.summary) render(d.summary); }catch(e){ fail.push('σύνοψη: ' + e.message); }
+  try{ renderList(d.recent); }catch(e){ fail.push('κινήσεις: ' + e.message); }
+  try{ renderFilterBar(); }catch(e){ fail.push('φίλτρο: ' + e.message); }
+  try{ renderAlert(); }catch(e){ fail.push('ειδοποίηση: ' + e.message); }
+
+  if(fail.length){
+    console.error('[Προϋπολογισμός] αποτυχία σχεδίασης:', fail);
+    toast(fail[0], true);
+  }
 }
 
 /* ── Μενού ── */
@@ -2122,9 +2134,17 @@ function render(s){
     strip.appendChild(col);
   });
 
-  const f = s.from.split('-'), t = s.to.split('-');
-  $('sFrom').textContent = f[2] + '.' + f[1];
-  $('sTo').textContent = t[2] + '.' + t[1];
+  /* Αν λείπουν, το backend που τρέχει είναι παλιότερο από αυτό το frontend.
+     Πέφτουμε πίσω στην περίοδο που ξέρουμε ήδη τοπικά, αντί να ρίξουμε
+     ολόκληρη την οθόνη για δύο ετικέτες. */
+  const sf = s.from || VIEW.from, stt = s.to || VIEW.to;
+  if(sf && stt){
+    const f = String(sf).split('-'), t = String(stt).split('-');
+    $('sFrom').textContent = f[2] + '.' + f[1];
+    $('sTo').textContent = t[2] + '.' + t[1];
+  }else{
+    $('sFrom').textContent = ''; $('sTo').textContent = '';
+  }
 
   renderBreakdown(filtered);
 }
@@ -2239,7 +2259,7 @@ function renderList(items){
     return;
   }
   el.innerHTML = ITEMS.map((it,i)=>{
-    const d = it.date.split('-');
+    const d = String(it.date || '--').split('-');
     return '<div class="item">'
       + '<span class="tick ' + (it.type==='income'?'in':'') + '"></span>'
       + '<span class="txt">'
@@ -2583,6 +2603,17 @@ function toast(msg, err){
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=> navigator.serviceWorker.register('sw.js').catch(()=>{}));
 }
+
+/* Οποιοδήποτε σφάλμα ξεφύγει, να λέει ΠΟΥ έγινε. Χωρίς αυτό, το μόνο που
+   βλέπει ο χρήστης είναι «Cannot read properties of undefined». */
+window.addEventListener('error', function(e){
+  console.error('[Προϋπολογισμός v18]', e.message,
+    (e.filename || '').split('/').pop() + ':' + e.lineno, e.error && e.error.stack);
+});
+window.addEventListener('unhandledrejection', function(e){
+  console.error('[Προϋπολογισμός v18] απόρριψη:', e.reason);
+});
+
 boot();
 </script>
 </body>
