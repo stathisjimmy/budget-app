@@ -314,6 +314,29 @@ input[type=date]{color-scheme:dark}
 .frow .fx{width:34px;height:34px;flex:none;display:flex;align-items:center;justify-content:center;
   border-radius:50%;color:var(--faint);background:transparent}
 .frow .fx:active{background:var(--sur-2);color:var(--clay)}
+/* ── Στατιστική εβδομάδας (v13) ── */
+.wbar.wtap{width:100%;background:transparent;border:0;padding:11px 6px;text-align:left;
+  font-family:var(--f);color:inherit;border-radius:10px;transition:.18s}
+.wbar.wtap:active{background:var(--sur-2)}
+.wbar.wsel{background:var(--sur-2)}
+.wbar .wo{width:32px;flex:none;text-align:right;font-size:.7rem;color:var(--faint);
+  font-variant-numeric:tabular-nums}
+.wdet{background:var(--sur-2);border:1px solid var(--hair);border-radius:18px;
+  padding:18px 16px 16px;margin-top:16px}
+.wdet h3{font-size:1.05rem;font-weight:300;margin-bottom:4px}
+.wdet .wh{font-size:.78rem;color:var(--dim);font-weight:300;margin-bottom:14px}
+.st{display:flex;align-items:baseline;justify-content:space-between;gap:14px;
+  padding:9px 0;border-bottom:1px solid var(--hair);font-size:.9rem;font-weight:300}
+.st .sk{color:var(--dim)}
+.st .sv{font-variant-numeric:tabular-nums;white-space:nowrap}
+.st .sv.up{color:var(--clay)}
+.st .sv.down{color:var(--mint)}
+.tag{display:block;margin-top:12px;padding:10px 15px;border-radius:16px;
+  font-size:.78rem;font-weight:300;border:1px solid var(--hair);color:var(--dim);line-height:1.5}
+.tag.hot{color:var(--amber);border-color:rgba(233,196,106,.38)}
+.wpill{display:inline-block;padding:6px 12px;border-radius:100px;background:rgba(255,255,255,.05);
+  font-size:.76rem;color:var(--dim);margin:0 6px 6px 0;font-variant-numeric:tabular-nums;
+  font-family:var(--f);border:0}
 .note{color:var(--dim);font-size:.84rem;font-weight:300;line-height:1.55;margin-top:18px}
 .total{display:flex;align-items:baseline;justify-content:space-between;
   padding:18px 0 6px;border-top:1px solid var(--hair-2);margin-top:8px}
@@ -565,7 +588,7 @@ input[type=date]{color-scheme:dark}
     </button>
     <button class="mrow" onclick="closeAll();openWeek()">
       <span class="mi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
-      <span class="mt"><span class="mt1">Ανάλυση εβδομάδας</span><span class="mt2">Ποιες μέρες ξοδεύεις πιο πολύ</span></span>
+      <span class="mt"><span class="mt1">Στατιστική εβδομάδας</span><span class="mt2">Ποιες μέρες ξοδεύεις πιο πολύ</span></span>
       <svg class="marw" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
     </button>
     <button class="mrow" onclick="closeAll();openFixed()">
@@ -582,17 +605,50 @@ input[type=date]{color-scheme:dark}
   <button class="ghost" style="margin-top:20px" onclick="closeAll()">Κλείσιμο</button>
 </div>
 
-<!-- Ανάλυση εβδομάδας -->
+<!-- Στατιστική εβδομάδας -->
 <div class="sheet" id="wSheet" role="dialog" aria-modal="true">
   <div class="grab"></div>
-  <h2>Ανάλυση εβδομάδας</h2>
-  <p class="note" style="margin:-8px 0 20px" id="wSub"></p>
+  <h2>Στατιστική εβδομάδας</h2>
+  <p class="note" style="margin:-8px 0 20px">Ποιες μέρες ξοδεύεις πραγματικά πιο πολύ. Όσο μεγαλύτερο το εύρος, τόσο ασφαλέστερο το συμπέρασμα.</p>
 
-  <span class="lbl">Έξοδα ανά ημέρα εβδομάδας</span>
-  <div id="wBars" style="margin-bottom:26px"></div>
+  <span class="lbl">Εύρος</span>
+  <div class="chips" id="wPresets" style="margin-bottom:14px"></div>
+  <div class="range">
+    <div class="f"><input type="date" id="wFrom" onchange="onWeekDates()"></div>
+    <div class="f"><input type="date" id="wTo" onchange="onWeekDates()"></div>
+  </div>
 
-  <span class="lbl">Μέρες με τα περισσότερα έξοδα</span>
-  <div id="wDays"></div>
+  <div class="toggle" style="margin-top:8px">
+    <span class="tx">
+      <span class="tt">Χωρίς πάγια</span>
+      <span class="ts">Το ενοίκιο και οι δόσεις πέφτουν πάντα την ίδια μέρα και σκεπάζουν τη συμπεριφορά σου.</span>
+    </span>
+    <button class="sw" id="wFixSw" onclick="toggleWeekFixed()" aria-label="Χωρίς πάγια"></button>
+  </div>
+
+  <button class="save" style="margin-top:18px" id="wRun" onclick="runWeek()">Υπολογισμός</button>
+
+  <div id="wLoad" class="empty" hidden>Υπολογισμός…</div>
+
+  <div id="wBody" hidden>
+    <p class="note" id="wSub" style="margin:22px 0 0"></p>
+
+    <span class="lbl" style="margin-top:26px">Μέτρηση</span>
+    <div class="seg" id="wMetric" style="margin-bottom:14px">
+      <button class="on" onclick="setWeekMetric('mean')">Μέσος όρος</button>
+      <button onclick="setWeekMetric('median')">Διάμεσος</button>
+      <button onclick="setWeekMetric('total')">Σύνολο</button>
+    </div>
+    <p class="note" id="wMetricNote" style="margin:0 0 16px"></p>
+
+    <div id="wBars"></div>
+    <p class="note" id="wWarn"></p>
+
+    <div id="wDetail"></div>
+
+    <span class="lbl" style="margin-top:30px">Μέρες με τα περισσότερα έξοδα</span>
+    <div id="wDays"></div>
+  </div>
 
   <button class="ghost" style="margin-top:22px" onclick="closeAll()">Κλείσιμο</button>
 </div>
@@ -888,43 +944,268 @@ function openMenu(){
   openSheet('mSheet');
 }
 
-/* ── Ανάλυση εβδομάδας ── */
+/* ── Στατιστική εβδομάδας (v13) ──
+   Δικό της εύρος ημερομηνιών, ανεξάρτητο από την περίοδο της αρχικής οθόνης,
+   γιατί με έναν μήνα (4-5 εμφανίσεις ανά ημέρα) δεν βγαίνει στατιστική. */
+
+let WSTAT = null;          /* το τελευταίο αποτέλεσμα από το backend */
+let WMETRIC = 'mean';      /* mean | median | total */
+let WNOFIX = true;         /* εξαίρεση παγίων */
+let WSEL = -1;             /* ποια ημέρα εβδομάδας είναι ανοιχτή στη λεπτομέρεια */
+
+/* Η προεπιλογή είναι οι 3 μήνες: δίνει ~13 εμφανίσεις ανά ημέρα εβδομάδας,
+   το ελάχιστο για να μιλάς για τάση και όχι για σύμπτωση. */
+const WPRESETS = [
+  { k:'m',   label:'Τρέχων μήνας' },
+  { k:'30',  label:'30 μέρες', days:30 },
+  { k:'90',  label:'3 μήνες',  days:90 },
+  { k:'180', label:'6 μήνες',  days:180 },
+  { k:'y',   label:'Φέτος' }
+];
+
+function presetRange(k){
+  const n = new Date();
+  const to = iso(n.getFullYear(), n.getMonth(), n.getDate());
+  if(k === 'm') return { from: iso(n.getFullYear(), n.getMonth(), 1), to: to };
+  if(k === 'y') return { from: iso(n.getFullYear(), 0, 1), to: to };
+  const d = new Date(n.getFullYear(), n.getMonth(), n.getDate() - (Number(k) - 1));
+  return { from: iso(d.getFullYear(), d.getMonth(), d.getDate()), to: to };
+}
+
 function openWeek(){
-  if(!SUMMARY || !SUMMARY.weekday){ toast('Δεν υπάρχουν δεδομένα', true); return; }
+  let saved = null;
+  try{ saved = JSON.parse(localStorage.getItem('wcfg') || 'null'); }catch(e){}
+  const r = (saved && saved.from && saved.to) ? saved : presetRange('90');
+  $('wFrom').value = r.from;
+  $('wTo').value   = r.to;
+  WNOFIX = saved ? saved.noFix !== false : true;
+  $('wFixSw').classList.toggle('on', WNOFIX);
+  WSEL = -1;
+  renderWPresets();
+  openSheet('wSheet');
+  runWeek();
+}
 
-  $('wSub').textContent = periodLabel(VIEW) + (FILTER.length ? ' · φιλτραρισμένο' : '');
+function saveWCfg(){
+  try{
+    localStorage.setItem('wcfg', JSON.stringify({
+      from: $('wFrom').value, to: $('wTo').value, noFix: WNOFIX
+    }));
+  }catch(e){ /* γεμάτο localStorage — δεν είναι κρίσιμο */ }
+}
 
-  // Δευτέρα-πρώτα (πιο φυσικό οπτικά), αλλά τα δεδομένα είναι 0=Κυριακή
+function renderWPresets(){
+  const f = $('wFrom').value, t = $('wTo').value;
+  const box = $('wPresets');
+  box.innerHTML = '';
+  WPRESETS.forEach(pr=>{
+    const r = presetRange(pr.k);
+    const b = document.createElement('button');
+    b.className = 'chip' + (r.from === f && r.to === t ? ' on' : '');
+    b.textContent = pr.label;
+    b.onclick = ()=>{ $('wFrom').value = r.from; $('wTo').value = r.to; renderWPresets(); runWeek(); };
+    box.appendChild(b);
+  });
+}
+function onWeekDates(){ renderWPresets(); }
+
+function toggleWeekFixed(){
+  WNOFIX = !WNOFIX;
+  $('wFixSw').classList.toggle('on', WNOFIX);
+  runWeek();
+}
+
+function setWeekMetric(m){
+  WMETRIC = m;
+  const keys = ['mean','median','total'];
+  [...$('wMetric').children].forEach((b,i)=> b.classList.toggle('on', keys[i] === m));
+  renderWeek();
+}
+
+async function runWeek(){
+  const from = $('wFrom').value, to = $('wTo').value;
+  if(!from || !to){ toast('Συμπλήρωσε και τις δύο ημερομηνίες', true); return; }
+  if(from > to){ toast('Η αρχή είναι μετά το τέλος', true); return; }
+
+  saveWCfg();
+  WSEL = -1;
+  $('wLoad').hidden = false;
+  $('wBody').hidden = true;
+  $('wRun').disabled = true;
+
+  try{
+    /* Το from/to εδώ ΠΑΡΑΚΑΜΠΤΕΙ την περίοδο της αρχικής οθόνης.
+       Το φίλτρο κατηγοριών το στέλνει ήδη η api(). */
+    WSTAT = await api('weekstats', { from: from, to: to, noFixed: WNOFIX });
+    $('wLoad').hidden = true;
+    $('wBody').hidden = false;
+    renderWeek();
+  }catch(e){
+    $('wLoad').hidden = true;
+    toast(e.message, true);
+  }finally{
+    $('wRun').disabled = false;
+  }
+}
+
+function weekVal(d){
+  return WMETRIC === 'mean' ? d.mean : WMETRIC === 'median' ? d.median : d.total;
+}
+
+const WMETRIC_NOTE = {
+  mean:   'Σύνολο ÷ πόσες φορές εμφανίστηκε η μέρα μέσα στο εύρος. Η μόνη δίκαιη σύγκριση, γιατί δεν έχουν όλες οι μέρες ίδιο πλήθος εμφανίσεων.',
+  median: 'Η μεσαία τιμή από όλες τις εμφανίσεις της μέρας. Ένα εφάπαξ μεγάλο έξοδο δεν την επηρεάζει — δείχνει τη συνήθεια.',
+  total:  'Σκέτο άθροισμα. Προσοχή: ευνοεί τις μέρες που έτυχε να εμφανιστούν περισσότερες φορές μέσα στο εύρος.'
+};
+
+function dmy(isoStr){
+  const d = new Date(isoStr);
+  return pad(d.getDate()) + '.' + pad(d.getMonth()+1) + '.' + d.getFullYear();
+}
+
+function renderWeek(){
+  const s = WSTAT;
+  if(!s) return;
+
+  $('wSub').textContent = dmy(s.from) + ' – ' + dmy(s.to)
+    + ' · ' + Math.round(s.weeks) + ' εβδομάδες · ' + s.tx + ' κινήσεις · σύνολο ' + n2(s.total) + ' €'
+    + (s.filtered ? ' · φιλτραρισμένο' : '');
+
+  $('wMetricNote').textContent = WMETRIC_NOTE[WMETRIC];
+
+  /* Δευτέρα-πρώτα οπτικά, αλλά τα δεδομένα είναι 0=Κυριακή */
   const order = [1,2,3,4,5,6,0];
-  const wd = SUMMARY.weekday;
-  const max = Math.max.apply(null, wd.map(d=>d.amount).concat([1]));
-  const topAmount = Math.max.apply(null, wd.map(d=>d.amount).concat([0]));
+  const vals = order.map(i => weekVal(s.weekday[i]));
+  const max  = Math.max.apply(null, vals.concat([1]));
+  const top  = Math.max.apply(null, vals.concat([0]));
 
-  $('wBars').innerHTML = order.map(i=>{
-    const d = wd[i];
-    const isTop = d.amount > 0 && d.amount === topAmount;
-    return '<div class="wbar">'
-      + '<span class="wn' + (isTop?' top':'') + '">' + WDAYS[i] + '</span>'
-      + '<span class="wt"><span class="wf' + (isTop?' top':'') + '" style="width:'
-        + Math.round(d.amount/max*100) + '%"></span></span>'
-      + '<span class="wv">' + n2(d.amount) + ' €</span>'
-      + '</div>';
+  $('wBars').innerHTML = order.map((i,k)=>{
+    const d = s.weekday[i], v = vals[k];
+    const isTop = v > 0 && v === top;
+    return '<button class="wbar wtap' + (WSEL === i ? ' wsel' : '') + '" onclick="selWeek(' + i + ')">'
+      + '<span class="wn' + (isTop ? ' top' : '') + '">' + WDAYS[i] + '</span>'
+      + '<span class="wt"><span class="wf' + (isTop ? ' top' : '') + '" style="width:'
+        + Math.round(v / max * 100) + '%"></span></span>'
+      + '<span class="wv">' + n2(v) + ' €</span>'
+      + '<span class="wo">' + d.occurrences + '×</span>'
+      + '</button>';
   }).join('');
 
-  // Οι συγκεκριμένες μέρες με τα περισσότερα έξοδα
-  const days = (SUMMARY.heaviestDays || []).slice(0,5);
-  const dmax = Math.max.apply(null, days.map(d=>d.amount).concat([1]));
-  $('wDays').innerHTML = days.length ? days.map(d=>{
-    const dt = new Date(d.date);
-    return '<button class="brow bwrap" style="width:100%;background:transparent" '
-      + 'onclick="closeAll();openDay(\'' + d.date + '\')">'
-      + '<span class="bn">' + WDAYS[d.weekday] + ' ' + dt.getDate() + '.' + pad(dt.getMonth()+1) + '</span>'
-      + '<span class="ba num">' + n2(d.amount) + ' €</span>'
-      + '<span class="bar" style="width:' + Math.round(d.amount/dmax*100) + '%"></span>'
-      + '</button>';
-  }).join('') : '<div class="empty">Κανένα έξοδο αυτή την περίοδο</div>';
+  /* Πόσο αξίζει να εμπιστευτείς το αποτέλεσμα */
+  let warn;
+  if(s.total <= 0){
+    warn = 'Δεν υπάρχουν έξοδα σε αυτό το εύρος.';
+  }else if(s.reliable){
+    warn = 'Κάθε μέρα εμφανίζεται τουλάχιστον ' + s.minOccurrences + ' φορές στο εύρος — αρκετά για τάση. Πάτα μια μέρα για ανάλυση.';
+  }else{
+    warn = 'Προσοχή: η σπανιότερη μέρα εμφανίζεται μόνο ' + s.minOccurrences + ' φορές. Κάτω από 8 εμφανίσεις τα νούμερα είναι ενδεικτικά — διάλεξε μεγαλύτερο εύρος.';
+  }
+  if(s.excludedFixed > 0){
+    warn += ' Εξαιρέθηκαν ' + s.excludedFixedCount + ' πάγιες κινήσεις, ' + n2(s.excludedFixed) + ' €.';
+  }
+  $('wWarn').textContent = warn;
 
-  openSheet('wSheet');
+  renderWDetail();
+
+  const days = s.heaviest || [];
+  const dmax = Math.max.apply(null, days.map(d=>d.amount).concat([1]));
+  $('wDays').innerHTML = days.length ? days.map(d=>
+    '<button class="brow bwrap" style="width:100%;background:transparent" '
+    + 'onclick="jumpToDay(\'' + d.date + '\')">'
+    + '<span class="bn">' + WDAYS[d.weekday] + ' ' + dmy(d.date) + '</span>'
+    + '<span class="ba num">' + n2(d.amount) + ' €</span>'
+    + '<span class="bar" style="width:' + Math.round(d.amount/dmax*100) + '%"></span>'
+    + '</button>'
+  ).join('') : '<div class="empty">Κανένα έξοδο σε αυτό το εύρος</div>';
+}
+
+function selWeek(i){
+  WSEL = (WSEL === i) ? -1 : i;
+  renderWeek();
+}
+
+function renderWDetail(){
+  const box = $('wDetail');
+  if(WSEL < 0 || !WSTAT){ box.innerHTML = ''; return; }
+
+  const s = WSTAT, d = s.weekday[WSEL];
+  const name = WDAYS[WSEL];
+  const dev = Math.round(d.dev * 100);
+  const devCls = dev > 0 ? 'up' : dev < 0 ? 'down' : '';
+  const skew = d.median > 0 ? d.mean / d.median : 0;
+
+  /* |z| ≥ 2: η απόκλιση δύσκολα εξηγείται από τύχη (~95% εμπιστοσύνη).
+     Το δείχνουμε μόνο με αρκετό δείγμα — αλλιώς είναι θόρυβος. */
+  const strong = Math.abs(d.z) >= 2 && d.occurrences >= 6;
+
+  const rows = [
+    ['Μέσος όρος ανά εμφάνιση', n2(d.mean) + ' €', ''],
+    ['Διάμεσος', n2(d.median) + ' €', ''],
+    ['Σύνολο (' + d.occurrences + ' εμφανίσεις)', n2(d.total) + ' €', ''],
+    ['Κινήσεις', d.tx + ' · ' + n2(d.perTx) + ' € ανά κίνηση', ''],
+    ['Μέρες με έξοδο', d.hits + ' από ' + d.occurrences, ''],
+    ['Ποσοστό εξόδων', Math.round(d.share * 100) + '% (αναμενόμενο 14%)', ''],
+    ['Απόκλιση από τη μέση μέρα', (dev > 0 ? '+' : '') + dev + '%', devCls]
+  ];
+
+  let html = '<div class="wdet">'
+    + '<h3>' + name + '</h3>'
+    + '<div class="wh">Η μέση μέρα του εύρους είναι ' + n2(s.meanAll) + ' €</div>'
+    + rows.map(r => '<div class="st"><span class="sk">' + r[0] + '</span>'
+        + '<span class="sv ' + r[2] + '">' + r[1] + '</span></div>').join('');
+
+  html += '<div class="tag' + (strong ? ' hot' : '') + '">'
+    + (strong
+        ? (d.z > 0
+            ? 'Ξεχωρίζει στατιστικά: η διαφορά από τη μέση μέρα δύσκολα εξηγείται από τύχη.'
+            : 'Στατιστικά ελαφρύτερη μέρα από τις υπόλοιπες.')
+        : 'Μέσα στην τυχαία διακύμανση — η διαφορά δεν αρκεί για συμπέρασμα.')
+    + '</div>';
+
+  /* Πότε ο μέσος όρος λέει ψέματα.
+     Διάμεσος 0 σημαίνει ότι στις μισές τουλάχιστον από αυτές τις μέρες δεν
+     ξόδεψες τίποτα — ο μέσος όρος τότε είναι κατασκεύασμα λίγων ημερών. */
+  let skewMsg = '';
+  if(d.total > 0){
+    if(d.median === 0){
+      skewMsg = 'Μόνο ' + d.hits + ' από τις ' + d.occurrences + ' είχαν έξοδο: το ποσό μαζεύεται από λίγες μεμονωμένες μέρες, όχι από συνήθεια.';
+    }else if(skew >= 1.8){
+      skewMsg = 'Ο μέσος όρος είναι ' + skew.toFixed(1)
+        + '× η διάμεσος: το βάρος έρχεται από λίγα μεγάλα έξοδα, όχι από συνήθεια.';
+    }
+  }
+  if(skewMsg) html += '<div class="tag">' + skewMsg + '</div>';
+
+  if(d.cats && d.cats.length){
+    html += '<div style="margin-top:18px"><span class="lbl">Πού πάνε</span>'
+      + d.cats.map(c => '<span class="wpill">' + esc(c.category) + ' · ' + n2(c.amount) + ' €</span>').join('')
+      + '</div>';
+  }
+
+  if(d.dates && d.dates.length){
+    html += '<div style="margin-top:14px"><span class="lbl">Οι βαρύτερες</span>'
+      + d.dates.slice(0,5).map(x=>
+          '<button class="wpill" onclick="jumpToDay(\'' + x.date + '\')">'
+          + dmy(x.date) + ' · ' + n2(x.amount) + ' €</button>'
+        ).join('')
+      + '</div>';
+  }
+
+  html += '</div>';
+  box.innerHTML = html;
+}
+
+/** Άνοιγμα μιας μέρας που μπορεί να είναι ΕΞΩ από την τρέχουσα περίοδο:
+    μεταφέρουμε πρώτα τη θέα στον μήνα της, φορτώνουμε, και μετά ανοίγουμε. */
+async function jumpToDay(dISO){
+  const inView = VIEW && dISO >= VIEW.from && dISO <= VIEW.to;
+  closeAll();
+  if(!inView){
+    const d = new Date(dISO);
+    VIEW = monthView(d.getFullYear(), d.getMonth());
+    await refresh();
+  }
+  openDay(dISO);
 }
 
 /* ── Ειδοποίηση χαμηλού υπολοίπου ── */
