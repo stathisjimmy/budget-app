@@ -334,6 +334,15 @@ input[type=date]{color-scheme:dark}
 .tag{display:block;margin-top:12px;padding:10px 15px;border-radius:16px;
   font-size:.78rem;font-weight:300;border:1px solid var(--hair);color:var(--dim);line-height:1.5}
 .tag.hot{color:var(--amber);border-color:rgba(233,196,106,.38)}
+.wsec{margin-top:22px;padding-top:4px}
+.wsec .lbl{margin-bottom:6px}
+.wday{width:100%;background:transparent;font-family:var(--f);text-align:left}
+.wday.zero{opacity:.42}
+.wday.zero .ba{color:var(--dim)}
+.wit{padding:13px 0}
+.wmore{width:100%;background:transparent;color:var(--dim);font-size:.82rem;font-weight:300;
+  padding:13px 0;text-align:center;border-radius:12px;transition:.18s}
+.wmore:active{background:rgba(255,255,255,.05)}
 .wpill{display:inline-block;padding:6px 12px;border-radius:100px;background:rgba(255,255,255,.05);
   font-size:.76rem;color:var(--dim);margin:0 6px 6px 0;font-variant-numeric:tabular-nums;
   font-family:var(--f);border:0}
@@ -586,9 +595,14 @@ input[type=date]{color-scheme:dark}
       <span class="mt"><span class="mt1">Top κατηγορίες</span><span class="mt2">Πού πάνε τα λεφτά</span></span>
       <svg class="marw" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
     </button>
-    <button class="mrow" onclick="closeAll();openWeek()">
+    <button class="mrow" onclick="closeAll();openWeekSimple()">
       <span class="mi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
-      <span class="mt"><span class="mt1">Στατιστική εβδομάδας</span><span class="mt2">Ποιες μέρες ξοδεύεις πιο πολύ</span></span>
+      <span class="mt"><span class="mt1">Ανάλυση εβδομάδας</span><span class="mt2">Γρήγορη ματιά στην περίοδο που βλέπεις</span></span>
+      <svg class="marw" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+    <button class="mrow" onclick="closeAll();openWeek()">
+      <span class="mi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18M6 20v-6M11 20V8M16 20v-9M21 20V5"/><path d="M3 4h6M6 4v3"/></svg></span>
+      <span class="mt"><span class="mt1">Στατιστική εβδομάδας</span><span class="mt2" id="mWeeks">Δικό της εύρος ημερομηνιών</span></span>
       <svg class="marw" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
     </button>
     <button class="mrow" onclick="closeAll();openFixed()">
@@ -603,6 +617,22 @@ input[type=date]{color-scheme:dark}
     </button>
   </div>
   <button class="ghost" style="margin-top:20px" onclick="closeAll()">Κλείσιμο</button>
+</div>
+
+<!-- Ανάλυση εβδομάδας (γρήγορη, στην τρέχουσα περίοδο) -->
+<div class="sheet" id="aSheet" role="dialog" aria-modal="true">
+  <div class="grab"></div>
+  <h2>Ανάλυση εβδομάδας</h2>
+  <p class="note" style="margin:-8px 0 20px" id="aSub"></p>
+
+  <span class="lbl">Έξοδα ανά ημέρα εβδομάδας</span>
+  <div id="aBars" style="margin-bottom:26px"></div>
+
+  <span class="lbl">Μέρες με τα περισσότερα έξοδα</span>
+  <div id="aDays"></div>
+
+  <p class="note">Σκέτα αθροίσματα για την περίοδο που βλέπεις. Για μέσους όρους, διάμεσο και μεγαλύτερο εύρος, δες τη «Στατιστική εβδομάδας».</p>
+  <button class="ghost" style="margin-top:22px" onclick="closeAll()">Κλείσιμο</button>
 </div>
 
 <!-- Στατιστική εβδομάδας -->
@@ -938,10 +968,56 @@ function openMenu(){
   $('mFilt').textContent = FILTER.length
     ? FILTER.length + (FILTER.length === 1 ? ' κατηγορία' : ' κατηγορίες')
     : 'Όλες οι κατηγορίες';
+  try{
+    const wc = JSON.parse(localStorage.getItem('wcfg') || 'null');
+    if(wc && wc.from && wc.to){
+      const dd = Math.round((new Date(wc.to) - new Date(wc.from)) / 86400000) + 1;
+      $('mWeeks').textContent = dd + ' μέρες · ' + Math.round(dd/7) + ' εβδομάδες';
+    }
+  }catch(e){}
   $('mFix').textContent = FIXED.length
     ? FIXED.length + (FIXED.length === 1 ? ' πάγιο' : ' πάγια')
     : 'Κανένα πάγιο';
   openSheet('mSheet');
+}
+
+/* ── Ανάλυση εβδομάδας: η γρήγορη οθόνη ──
+   Δουλεύει ΜΟΝΟ με ό,τι έχει ήδη φέρει το τελευταίο init — μηδέν αίτημα δικτύου.
+   Δείχνει σκέτα αθροίσματα για την περίοδο που βλέπει ο χρήστης. */
+function openWeekSimple(){
+  if(!SUMMARY || !SUMMARY.weekday){ toast('Δεν υπάρχουν δεδομένα', true); return; }
+
+  $('aSub').textContent = periodLabel(VIEW) + (FILTER.length ? ' · φιλτραρισμένο' : '');
+
+  const order = [1,2,3,4,5,6,0];
+  const wd = SUMMARY.weekday;
+  const max = Math.max.apply(null, wd.map(d=>d.amount).concat([1]));
+  const topAmount = Math.max.apply(null, wd.map(d=>d.amount).concat([0]));
+
+  $('aBars').innerHTML = order.map(i=>{
+    const d = wd[i];
+    const isTop = d.amount > 0 && d.amount === topAmount;
+    return '<div class="wbar">'
+      + '<span class="wn' + (isTop?' top':'') + '">' + WDAYS[i] + '</span>'
+      + '<span class="wt"><span class="wf' + (isTop?' top':'') + '" style="width:'
+        + Math.round(d.amount/max*100) + '%"></span></span>'
+      + '<span class="wv">' + n2(d.amount) + ' €</span>'
+      + '</div>';
+  }).join('');
+
+  const days = (SUMMARY.heaviestDays || []).slice(0,5);
+  const dmax = Math.max.apply(null, days.map(d=>d.amount).concat([1]));
+  $('aDays').innerHTML = days.length ? days.map(d=>{
+    const dt = new Date(d.date);
+    return '<button class="brow bwrap" style="width:100%;background:transparent" '
+      + 'onclick="closeAll();openDay(\'' + d.date + '\')">'
+      + '<span class="bn">' + WDAYS[d.weekday] + ' ' + dt.getDate() + '.' + pad(dt.getMonth()+1) + '</span>'
+      + '<span class="ba num">' + n2(d.amount) + ' €</span>'
+      + '<span class="bar" style="width:' + Math.round(d.amount/dmax*100) + '%"></span>'
+      + '</button>';
+  }).join('') : '<div class="empty">Κανένα έξοδο αυτή την περίοδο</div>';
+
+  openSheet('aSheet');
 }
 
 /* ── Στατιστική εβδομάδας (v13) ──
@@ -952,6 +1028,9 @@ let WSTAT = null;          /* το τελευταίο αποτέλεσμα απ�
 let WMETRIC = 'mean';      /* mean | median | total */
 let WNOFIX = true;         /* εξαίρεση παγίων */
 let WSEL = -1;             /* ποια ημέρα εβδομάδας είναι ανοιχτή στη λεπτομέρεια */
+let WEXP = { cats:false, days:false, items:false };   /* ξεδιπλωμένες λίστες */
+
+const WDAYS_PL = ['Κυριακές','Δευτέρες','Τρίτες','Τετάρτες','Πέμπτες','Παρασκευές','Σάββατα'];
 
 /* Η προεπιλογή είναι οι 3 μήνες: δίνει ~13 εμφανίσεις ανά ημέρα εβδομάδας,
    το ελάχιστο για να μιλάς για τάση και όχι για σύμπτωση. */
@@ -1029,6 +1108,7 @@ async function runWeek(){
 
   saveWCfg();
   WSEL = -1;
+  WEXP = { cats:false, days:false, items:false };
   $('wLoad').hidden = false;
   $('wBody').hidden = true;
   $('wRun').disabled = true;
@@ -1121,6 +1201,7 @@ function renderWeek(){
 
 function selWeek(i){
   WSEL = (WSEL === i) ? -1 : i;
+  WEXP = { cats:false, days:false, items:false };   /* νέα μέρα, μαζεμένες λίστες */
   renderWeek();
 }
 
@@ -1130,6 +1211,7 @@ function renderWDetail(){
 
   const s = WSTAT, d = s.weekday[WSEL];
   const name = WDAYS[WSEL];
+  const plural = WDAYS_PL[WSEL];
   const dev = Math.round(d.dev * 100);
   const devCls = dev > 0 ? 'up' : dev < 0 ? 'down' : '';
   const skew = d.median > 0 ? d.mean / d.median : 0;
@@ -1149,8 +1231,9 @@ function renderWDetail(){
   ];
 
   let html = '<div class="wdet">'
-    + '<h3>' + name + '</h3>'
-    + '<div class="wh">Η μέση μέρα του εύρους είναι ' + n2(s.meanAll) + ' €</div>'
+    + '<h3>Όλες οι ' + plural + '</h3>'
+    + '<div class="wh">' + dmy(s.from) + ' – ' + dmy(s.to)
+      + ' · η μέση μέρα του εύρους είναι ' + n2(s.meanAll) + ' €</div>'
     + rows.map(r => '<div class="st"><span class="sk">' + r[0] + '</span>'
         + '<span class="sv ' + r[2] + '">' + r[1] + '</span></div>').join('');
 
@@ -1176,23 +1259,83 @@ function renderWDetail(){
   }
   if(skewMsg) html += '<div class="tag">' + skewMsg + '</div>';
 
-  if(d.cats && d.cats.length){
-    html += '<div style="margin-top:18px"><span class="lbl">Πού πάνε</span>'
-      + d.cats.map(c => '<span class="wpill">' + esc(c.category) + ' · ' + n2(c.amount) + ' €</span>').join('')
+  /* ── Κατηγορίες ── */
+  const cats = d.cats || [];
+  if(cats.length){
+    const shown = WEXP.cats ? cats : cats.slice(0,4);
+    const cmax = Math.max.apply(null, cats.map(c=>c.amount).concat([1]));
+    html += '<div class="wsec"><span class="lbl">Κατηγορίες</span>'
+      + shown.map(c =>
+          '<div class="brow bwrap">'
+          + '<span class="bn">' + esc(c.category) + '</span>'
+          + '<span class="ba num">' + n2(c.amount) + ' €</span>'
+          + '<span class="bar" style="width:' + Math.round(c.amount/cmax*100) + '%"></span>'
+          + '</div>').join('')
+      + more(cats.length, shown.length, 'cats')
       + '</div>';
   }
 
-  if(d.dates && d.dates.length){
-    html += '<div style="margin-top:14px"><span class="lbl">Οι βαρύτερες</span>'
-      + d.dates.slice(0,5).map(x=>
-          '<button class="wpill" onclick="jumpToDay(\'' + x.date + '\')">'
-          + dmy(x.date) + ' · ' + n2(x.amount) + ' €</button>'
-        ).join('')
+  /* ── Κάθε εμφάνιση της ημέρας μέσα στο εύρος ── */
+  const days = d.days || [];
+  if(days.length){
+    const withMoney = days.filter(x => x.amount > 0);
+    const list = WEXP.days ? days : withMoney.slice(0,8);
+    const dmax = Math.max.apply(null, days.map(x=>x.amount).concat([1]));
+
+    html += '<div class="wsec"><span class="lbl">Κάθε '
+      + name.toLowerCase() + ' ξεχωριστά</span>'
+      + list.map(x =>
+          '<button class="brow bwrap wday' + (x.amount > 0 ? '' : ' zero') + '" '
+          + 'onclick="jumpToDay(\'' + x.date + '\')">'
+          + '<span class="bn">' + dmy(x.date)
+            + (x.count ? '<span class="bc"> · ' + x.count + (x.count === 1 ? ' κίνηση' : ' κινήσεις') + '</span>' : '')
+          + '</span>'
+          + '<span class="ba num">' + n2(x.amount) + ' €</span>'
+          + '<span class="bar" style="width:' + Math.round(x.amount/dmax*100) + '%"></span>'
+          + '</button>').join('')
+      + (WEXP.days
+          ? '<button class="wmore" onclick="wExpand(\'days\')">Μόνο όσες είχαν έξοδο</button>'
+          : (days.length > list.length
+              ? '<button class="wmore" onclick="wExpand(\'days\')">Δείξε και τις '
+                + days.length + ' εμφανίσεις, μαζί με τις μηδενικές</button>'
+              : ''))
+      + '</div>';
+  }
+
+  /* ── Οι ίδιες οι κινήσεις ── */
+  const items = d.items || [];
+  if(items.length){
+    const shown = WEXP.items ? items : items.slice(0,10);
+    html += '<div class="wsec"><span class="lbl">Κινήσεις (' + d.tx + ')</span>'
+      + shown.map(it =>
+          '<div class="item wit">'
+          + '<span class="tick"></span>'
+          + '<span class="txt">'
+            + '<span class="t1">' + esc(it.description || it.category) + '</span>'
+            + '<span class="t2">' + dmy(it.date) + ' · ' + esc(it.category) + '</span>'
+          + '</span>'
+          + '<span class="amt num out">−' + n2(it.amount) + ' €</span>'
+          + '</div>').join('')
+      + more(items.length, shown.length, 'items')
+      + (d.itemsTruncated ? '<p class="note">Δείχνονται οι 400 πιο πρόσφατες.</p>' : '')
       + '</div>';
   }
 
   html += '</div>';
   box.innerHTML = html;
+}
+
+/** Κουμπί «δείξε τα υπόλοιπα» / «λιγότερα», μόνο όταν έχει νόημα. */
+function more(total, shownCount, key){
+  if(total <= shownCount && !WEXP[key]) return '';
+  return '<button class="wmore" onclick="wExpand(\'' + key + '\')">'
+    + (WEXP[key] ? 'Λιγότερα' : 'Δείξε και τα υπόλοιπα ' + (total - shownCount))
+    + '</button>';
+}
+
+function wExpand(key){
+  WEXP[key] = !WEXP[key];
+  renderWDetail();
 }
 
 /** Άνοιγμα μιας μέρας που μπορεί να είναι ΕΞΩ από την τρέχουσα περίοδο:
@@ -1584,7 +1727,7 @@ function openEdit(i){
 function openSheet(id){ $('scrim').classList.add('on'); $(id).classList.add('on'); }
 function closeAll(){
   $('scrim').classList.remove('on');
-  ['sheet','pSheet','fSheet','cSheet','insSheet','rSheet','dSheet','mSheet','wSheet'].forEach(id=>$(id).classList.remove('on'));
+  ['sheet','pSheet','fSheet','cSheet','insSheet','rSheet','dSheet','mSheet','wSheet','aSheet'].forEach(id=>$(id).classList.remove('on'));
   $('thumb').style.display = 'none';
   CUR_DAY = null;
   [...$('strip').children].forEach(col => col.classList.remove('sel'));   // σβήσε την επιλογή
