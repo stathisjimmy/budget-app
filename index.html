@@ -1292,29 +1292,44 @@ function paint(d){
 let LASTRAW = null;    /* η τελευταία απάντηση του init, ωμή */
 let LASTERR = null;    /* το τελευταίο σφάλμα, με stack */
 
+const H = t => ({ head: t });          /* επικεφαλίδα ενότητας */
+
 function diagLines(){
   const d = LASTRAW;
   const s = d && d.summary;
+
+  /* Αυτόματο πόρισμα: αν λείπουν πεδία που το backend δίνει από την v12,
+     τότε το /exec σερβίρει ΠΑΛΙΟ κώδικα — συνήθως γιατί το deployment
+     δείχνει σε παλιά έκδοση αντί για «New version». */
+  const stale = !!(s && (s.from === undefined || s.carryover === undefined || !s.weekday));
+  const verdict = !d ? '⚠ Καμία απάντηση'
+    : stale ? '⚠ ΤΟ /exec ΤΡΕΧΕΙ ΠΑΛΙΟ ΚΩΔΙΚΑ — κάνε Deploy → New version'
+    : 'εντάξει';
   const host = (()=>{ try{ return new URL(CFG.url).host + (CFG.url.endsWith('/exec') ? ' /exec' : ' ⚠ ΔΕΝ τελειώνει σε /exec'); }
                       catch(e){ return CFG.url ? '⚠ άκυρο URL' : '⚠ κενό'; } })();
   return [
-    ['Frontend', 'v18'],
+    ['Πόρισμα', verdict],
+    ['Frontend', 'v18b'],
     ['Backend URL', host],
     ['Κωδικός', CFG.token ? 'ορισμένος (' + CFG.token.length + ' χαρακτ.)' : '⚠ ΚΕΝΟΣ'],
     ['Περίοδος', VIEW ? (VIEW.from + ' → ' + VIEW.to) : '⚠ άγνωστη'],
     ['Φίλτρο', FILTER.length ? FILTER.join(', ') : 'κανένα'],
-    ['— Απάντηση init —', ''],
+    H('Απάντηση init'),
     ['Ήρθε απάντηση;', d ? 'ναι' : '⚠ ΟΧΙ — δεν ολοκληρώθηκε κλήση'],
     ['Κατηγορίες', d && d.categories ? ((d.categories.expense||[]).length + ' εξόδων, ' + (d.categories.income||[]).length + ' εσόδων') : '⚠ λείπουν'],
-    ['recent (κινήσεις)', d ? (Array.isArray(d.recent) ? d.recent.length : '⚠ δεν είναι πίνακας: ' + typeof d.recent) : '—'],
+    ['Πεδία απάντησης', d ? Object.keys(d).join(', ') : '—'],
+    ['recent (κινήσεις)', d ? (Array.isArray(d.recent)
+        ? (d.recent.length === 0 ? '⚠ 0 — ΑΔΕΙΟΣ πίνακας' : String(d.recent.length))
+        : '⚠ δεν είναι πίνακας: ' + typeof d.recent) : '—'],
     ['summary', s ? 'υπάρχει' : '⚠ λείπει'],
     ['summary.count', s ? String(s.count) : '—'],
+    ['summary: πεδία', s ? Object.keys(s).join(', ') : '—'],
     ['summary.from/to', s ? ((s.from || '⚠κενό') + ' → ' + (s.to || '⚠κενό')) : '—'],
     ['summary.expense', s ? String(s.expense) : '—'],
     ['summary.income', s ? String(s.income) : '—'],
     ['carryover (v12+)', s ? (s.carryover !== undefined ? 'ναι' : '⚠ ΟΧΙ — παλιό deployment') : '—'],
     ['weekstats (v13+)', s && s.weekday ? 'ναι' : '⚠ ΟΧΙ — παλιό deployment'],
-    ['— Οθόνη —', ''],
+    H('Οθόνη'),
     ['ITEMS στη μνήμη', String(ITEMS.length)],
     ['Γραμμές στη λίστα', String(document.querySelectorAll('#list .item').length)],
     ['Τελευταίο σφάλμα', LASTERR || 'κανένα']
@@ -1323,16 +1338,21 @@ function diagLines(){
 
 function openDiag(){
   $('gBody').innerHTML = diagLines().map(r=>{
-    if(!r[1]) return '<div class="lbl" style="margin-top:18px">' + esc(r[0].replace(/—/g,'').trim()) + '</div>';
-    const warn = /⚠/.test(r[1]);
+    if(r.head) return '<div class="lbl" style="margin-top:20px">' + esc(r.head) + '</div>';
+    const v = String(r[1]);
     return '<div class="st"><span class="sk">' + esc(r[0]) + '</span>'
-      + '<span class="sv' + (warn ? ' up' : '') + '">' + esc(r[1]) + '</span></div>';
+      + '<span class="sv' + (/⚠/.test(v) ? ' up' : '') + '" style="max-width:62%;text-align:right;white-space:normal">'
+      + esc(v) + '</span></div>';
   }).join('');
   openSheet('gSheet');
 }
 
 function copyDiag(){
-  const txt = diagLines().filter(r => r[1]).map(r => r[0] + ': ' + r[1]).join('\n');
+  /* ΠΡΟΣΟΧΗ: όχι filter(r => r[1]) — μια τιμή 0 είναι falsy και θα έκοβε
+     ακριβώς τη γραμμή που ενδιαφέρει περισσότερο. */
+  const txt = diagLines()
+    .map(r => r.head ? '\n[' + r.head + ']' : r[0] + ': ' + r[1])
+    .join('\n');
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(txt).then(()=>toast('Αντιγράφηκε')).catch(()=>toast('Δεν έγινε αντιγραφή', true));
   }else{
