@@ -336,6 +336,12 @@ input[type=date]{color-scheme:dark}
 .tag.hot{color:var(--amber);border-color:rgba(233,196,106,.38)}
 /* ── Αναζήτηση περιγραφών στο φίλτρο (v16) ── */
 .hlt{color:var(--amber);font-weight:400}
+.chk{margin:10px 0 0;padding-left:20px;color:var(--dim);font-size:.84rem;
+  font-weight:300;line-height:1.6}
+.chk li{margin-bottom:9px}
+.chk b{color:var(--fg);font-weight:400}
+.chk code{font-family:ui-monospace,Menlo,monospace;font-size:.8rem;
+  background:rgba(255,255,255,.06);padding:1px 5px;border-radius:5px}
 .vstamp{font-size:.6rem;letter-spacing:.14em;color:var(--faint);font-weight:400;
   border:1px solid var(--hair);border-radius:100px;padding:2px 8px;margin-left:8px;
   vertical-align:middle;text-transform:none}
@@ -848,7 +854,16 @@ input[type=date]{color-scheme:dark}
   <h2>Διαγνωστικά</h2>
   <p class="note" style="margin:-8px 0 20px">Τι ακριβώς γύρισε το backend την τελευταία φορά. Στείλε αυτά αν κάτι δεν παίζει.</p>
   <div id="gBody"></div>
+
+  <span class="lbl" style="margin-top:24px">Αν το build δεν είναι v20</span>
+  <ol class="chk">
+    <li>Στον editor του Apps Script, <b>Ctrl+S</b> πριν από κάθε Deploy. Το Apps Script δημοσιεύει ό,τι έχει αποθηκευτεί, όχι ό,τι βλέπεις.</li>
+    <li>Δες τη λίστα αρχείων αριστερά: <b>πρέπει να υπάρχει ΕΝΑ μόνο αρχείο με <code>doPost</code></b>. Αν έμεινε παλιό <code>Code.gs</code> ή <code>Κώδικας.gs</code> δίπλα στο νέο, το ένα ακυρώνει το άλλο.</li>
+    <li>Deploy → Διαχείριση αναπτύξεων: αν υπάρχουν <b>πολλές</b> αναπτύξεις τύπου Web app, το URL σου δείχνει σε μία συγκεκριμένη. Ταίριαξε το Deployment id παραπάνω.</li>
+    <li>Στο ✏️ της σωστής ανάπτυξης: <b>Version → New version</b> → Deploy.</li>
+  </ol>
   <button class="ghost" style="margin-top:18px" onclick="copyDiag()">Αντιγραφή</button>
+  <button class="ghost" onclick="changeConn()">Αλλαγή σύνδεσης</button>
   <button class="ghost" onclick="hardReset()">Σκληρή επαναφόρτωση</button>
   <p class="note" style="margin-top:10px">Σβήνει τον service worker, τα caches και τα τοπικά στιγμιότυπα, και ξαναφορτώνει. Το URL και ο κωδικός σου μένουν.</p>
   <button class="ghost" onclick="closeAll()">Κλείσιμο</button>
@@ -1098,6 +1113,9 @@ async function api(action, extra){
     redirect:'follow'
   });
   const j = await res.json();
+  /* Η σφραγίδα ταξιδεύει σε ΚΑΘΕ απάντηση, ακόμη και σε σφάλμα — έτσι ξέρουμε
+     ποιος κώδικας τρέχει στο /exec ανεξάρτητα από το τι νομίζουμε ότι ανεβάσαμε. */
+  BUILD = j.build || '⚠ δεν στέλνει σφραγίδα → deployment παλιότερο από v20';
   if(!j.ok) throw new Error(j.error || 'Άγνωστο σφάλμα');
   return j.data;
 }
@@ -1231,7 +1249,7 @@ function snapWrite(d){
 }
 
 /* ── Boot ── */
-const APPVER = 'v19';
+const APPVER = 'v20';
 
 function boot(){
   try{ $('vStamp').textContent = APPVER; }catch(e){}
@@ -1301,6 +1319,7 @@ function paint(d){
 let LASTRAW = null;    /* η τελευταία απάντηση του init, ωμή */
 let LASTERR = null;    /* το τελευταίο σφάλμα, με stack */
 let LASTSRC = '—';     /* «δίκτυο» ή «στιγμιότυπο»: εξηγεί διαφορές μεταξύ συσκευών */
+let BUILD = '—';       /* η έκδοση που δηλώνει το ίδιο το backend */
 
 const H = t => ({ head: t });          /* επικεφαλίδα ενότητας */
 
@@ -1311,8 +1330,13 @@ function diagLines(){
   /* Αυτόματο πόρισμα: αν λείπουν πεδία που το backend δίνει από την v12,
      τότε το /exec σερβίρει ΠΑΛΙΟ κώδικα — συνήθως γιατί το deployment
      δείχνει σε παλιά έκδοση αντί για «New version». */
+  /* Πεδία που υπήρχαν ΜΟΝΟ σε πολύ παλιές γενιές του backend. Αν εμφανίζονται,
+     το /exec δείχνει σε άλλο project ή σε πολύ παλιά αποθηκευμένη έκδοση —
+     δεν αρκεί «New version» στο project που επεξεργάζεσαι. */
+  const ancient = !!(s && (s.topCategories !== undefined || s.daysInMonth !== undefined || s.year !== undefined));
   const stale = !!(s && (s.from === undefined || s.carryover === undefined || !s.weekday));
   const verdict = !d ? '⚠ Καμία απάντηση'
+    : ancient ? '⚠ ΤΟ /exec ΣΕΡΒΙΡΕΙ ΠΟΛΥ ΠΑΛΙΟ ΚΩΔΙΚΑ — δες «Backend build» και το [Έλεγχος project] παρακάτω'
     : stale ? '⚠ ΤΟ /exec ΤΡΕΧΕΙ ΠΑΛΙΟ ΚΩΔΙΚΑ — κάνε Deploy → New version'
     : 'εντάξει';
   const host = (()=>{ try{ return new URL(CFG.url).host + (CFG.url.endsWith('/exec') ? ' /exec' : ' ⚠ ΔΕΝ τελειώνει σε /exec'); }
@@ -1332,6 +1356,8 @@ function diagLines(){
     ['Frontend', APPVER],
     ['Backend URL', host],
     ['Deployment id', dep],
+    ['Backend build', BUILD],
+    ['Πλήρες URL', CFG.url || '⚠ κενό'],
     ['Κωδικός', CFG.token ? 'ορισμένος (' + CFG.token.length + ' χαρακτ.)' : '⚠ ΚΕΝΟΣ'],
     ['Περίοδος', VIEW ? (VIEW.from + ' → ' + VIEW.to) : '⚠ άγνωστη'],
     ['Φίλτρο', FILTER.length ? FILTER.join(', ') : 'κανένα'],
@@ -1368,6 +1394,18 @@ function openDiag(){
       + esc(v) + '</span></div>';
   }).join('');
   openSheet('gSheet');
+}
+
+/** Ξαναδείχνει την οθόνη σύνδεσης, προσυμπληρωμένη. Μέχρι τώρα, αν είχες
+    ρυθμίσει λάθος URL, ο μόνος τρόπος ήταν να καθαρίσεις τον browser. */
+function changeConn(){
+  closeAll();
+  $('sUrl').value = CFG.url;
+  $('sTok').value = CFG.token;
+  $('app').hidden = true;
+  $('actions').hidden = true;
+  $('setup').hidden = false;
+  window.scrollTo(0,0);
 }
 
 /** Το σίγουρο σπάσιμο κάθε cache. Χωρίς αυτό, ένας κολλημένος service
