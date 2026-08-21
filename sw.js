@@ -1,5 +1,5 @@
 /* Προϋπολογισμός — service worker (offline app shell) */
-const CACHE = 'proyp-v18c';  /* v18c: διαγνωστικά με πόρισμα deployment */
+const CACHE = 'proyp-v19';   /* v19: deployment id + σκληρή επαναφόρτωση + σφραγίδα έκδοσης */
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

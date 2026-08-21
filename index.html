@@ -336,6 +336,9 @@ input[type=date]{color-scheme:dark}
 .tag.hot{color:var(--amber);border-color:rgba(233,196,106,.38)}
 /* ── Αναζήτηση περιγραφών στο φίλτρο (v16) ── */
 .hlt{color:var(--amber);font-weight:400}
+.vstamp{font-size:.6rem;letter-spacing:.14em;color:var(--faint);font-weight:400;
+  border:1px solid var(--hair);border-radius:100px;padding:2px 8px;margin-left:8px;
+  vertical-align:middle;text-transform:none}
 .tsub{display:block;font-size:.68rem;letter-spacing:.06em;text-transform:none;
   color:var(--faint);margin-top:3px}
 .fgrp{width:100%;background:transparent;font-family:var(--f);text-align:left}
@@ -793,7 +796,7 @@ input[type=date]{color-scheme:dark}
 <!-- Μενού -->
 <div class="sheet" id="mSheet" role="dialog" aria-modal="true">
   <div class="grab"></div>
-  <h2>Μενού</h2>
+  <h2>Μενού <span class="vstamp" id="vStamp"></span></h2>
   <div class="menu">
     <button class="mrow" onclick="closeAll();openSearch()">
       <span class="mi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span>
@@ -846,6 +849,8 @@ input[type=date]{color-scheme:dark}
   <p class="note" style="margin:-8px 0 20px">Τι ακριβώς γύρισε το backend την τελευταία φορά. Στείλε αυτά αν κάτι δεν παίζει.</p>
   <div id="gBody"></div>
   <button class="ghost" style="margin-top:18px" onclick="copyDiag()">Αντιγραφή</button>
+  <button class="ghost" onclick="hardReset()">Σκληρή επαναφόρτωση</button>
+  <p class="note" style="margin-top:10px">Σβήνει τον service worker, τα caches και τα τοπικά στιγμιότυπα, και ξαναφορτώνει. Το URL και ο κωδικός σου μένουν.</p>
   <button class="ghost" onclick="closeAll()">Κλείσιμο</button>
 </div>
 
@@ -1226,7 +1231,10 @@ function snapWrite(d){
 }
 
 /* ── Boot ── */
+const APPVER = 'v19';
+
 function boot(){
+  try{ $('vStamp').textContent = APPVER; }catch(e){}
   if(!CFG.url || !CFG.token){ $('setup').hidden = false; return; }
   $('app').hidden = false; $('actions').hidden = false;
   const n = new Date();
@@ -1243,13 +1251,14 @@ async function refresh(){
 
   // 1) ΑΜΕΣΩΣ: ό,τι ξέρουμε ήδη για αυτή την περίοδο
   const cached = snapRead();
-  if(cached) paint(cached);
+  if(cached){ LASTSRC = 'στιγμιότυπο (τοπικό)'; paint(cached); }
 
   // 2) ΣΤΟ ΠΑΡΑΣΚΗΝΙΟ: η αλήθεια από το Sheet
   status('busy');
   try{
     const d = await api('init');
     LASTRAW = d;
+    LASTSRC = 'δίκτυο';
     paint(d);
     snapWrite(d);
     status('');
@@ -1291,6 +1300,7 @@ function paint(d){
 
 let LASTRAW = null;    /* η τελευταία απάντηση του init, ωμή */
 let LASTERR = null;    /* το τελευταίο σφάλμα, με stack */
+let LASTSRC = '—';     /* «δίκτυο» ή «στιγμιότυπο»: εξηγεί διαφορές μεταξύ συσκευών */
 
 const H = t => ({ head: t });          /* επικεφαλίδα ενότητας */
 
@@ -1307,10 +1317,21 @@ function diagLines(){
     : 'εντάξει';
   const host = (()=>{ try{ return new URL(CFG.url).host + (CFG.url.endsWith('/exec') ? ' /exec' : ' ⚠ ΔΕΝ τελειώνει σε /exec'); }
                       catch(e){ return CFG.url ? '⚠ άκυρο URL' : '⚠ κενό'; } })();
+
+  /* Το ΚΡΙΣΙΜΟ για σύγκριση συσκευών: κάθε ανάπτυξη έχει δικό της id μέσα
+     στο URL. Αν κινητό και υπολογιστής δείχνουν άλλο id, μιλάνε σε άλλον
+     κώδικα — με τον ίδιο κωδικό και το ίδιο Sheet. */
+  const dep = (()=>{
+    const m = String(CFG.url || '').match(/[/]s[/]([^/]+)[/]/);
+    if(!m) return '⚠ δεν βρέθηκε id στο URL';
+    const id = m[1];
+    return id.length > 22 ? id.slice(0,10) + '…' + id.slice(-10) : id;
+  })();
   return [
     ['Πόρισμα', verdict],
-    ['Frontend', 'v18b'],
+    ['Frontend', APPVER],
     ['Backend URL', host],
+    ['Deployment id', dep],
     ['Κωδικός', CFG.token ? 'ορισμένος (' + CFG.token.length + ' χαρακτ.)' : '⚠ ΚΕΝΟΣ'],
     ['Περίοδος', VIEW ? (VIEW.from + ' → ' + VIEW.to) : '⚠ άγνωστη'],
     ['Φίλτρο', FILTER.length ? FILTER.join(', ') : 'κανένα'],
@@ -1330,6 +1351,8 @@ function diagLines(){
     ['carryover (v12+)', s ? (s.carryover !== undefined ? 'ναι' : '⚠ ΟΧΙ — παλιό deployment') : '—'],
     ['weekstats (v13+)', s && s.weekday ? 'ναι' : '⚠ ΟΧΙ — παλιό deployment'],
     H('Οθόνη'),
+    ['Πηγή τελευταίας σχεδίασης', LASTSRC],
+    ['Αποθηκευμένο στιγμιότυπο', (()=>{ try{ return localStorage.getItem(snapKey()) ? 'ναι' : 'όχι'; }catch(e){ return '—'; } })()],
     ['ITEMS στη μνήμη', String(ITEMS.length)],
     ['Γραμμές στη λίστα', String(document.querySelectorAll('#list .item').length)],
     ['Τελευταίο σφάλμα', LASTERR || 'κανένα']
@@ -1345,6 +1368,26 @@ function openDiag(){
       + esc(v) + '</span></div>';
   }).join('');
   openSheet('gSheet');
+}
+
+/** Το σίγουρο σπάσιμο κάθε cache. Χωρίς αυτό, ένας κολλημένος service
+    worker μπορεί να σερβίρει παλιό index.html για ώρες. */
+async function hardReset(){
+  toast('Καθαρισμός…');
+  try{
+    if('serviceWorker' in navigator){
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+    }
+    if(window.caches){
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+    }
+    const snaps = JSON.parse(localStorage.getItem('snapKeys') || '[]');
+    snaps.forEach(k => localStorage.removeItem(k));
+    localStorage.removeItem('snapKeys');
+  }catch(e){ /* συνεχίζουμε ούτως ή άλλως */ }
+  location.replace(location.pathname + '?v=' + Date.now());
 }
 
 function copyDiag(){
@@ -2769,11 +2812,11 @@ if('serviceWorker' in navigator){
    βλέπει ο χρήστης είναι «Cannot read properties of undefined». */
 window.addEventListener('error', function(e){
   LASTERR = e.message + ' @' + (e.filename || '').split('/').pop() + ':' + e.lineno;
-  console.error('[Προϋπολογισμός v18]', e.message,
+  console.error('[Προϋπολογισμός ' + APPVER + ']', e.message,
     (e.filename || '').split('/').pop() + ':' + e.lineno, e.error && e.error.stack);
 });
 window.addEventListener('unhandledrejection', function(e){
-  console.error('[Προϋπολογισμός v18] απόρριψη:', e.reason);
+  console.error('[Προϋπολογισμός ' + APPVER + '] απόρριψη:', e.reason);
 });
 
 boot();
