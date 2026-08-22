@@ -388,6 +388,12 @@ input[type=date]{color-scheme:dark}
 .wpill{display:inline-block;padding:6px 12px;border-radius:100px;background:rgba(255,255,255,.05);
   font-size:.76rem;color:var(--dim);margin:0 6px 6px 0;font-variant-numeric:tabular-nums;
   font-family:var(--f);border:0}
+/* ── Ένδειξη συγχρονισμού & προσωρινές γραμμές (v23) ── */
+.dot.sync{background:var(--amber);animation:dotpulse 1.1s ease-in-out infinite}
+@keyframes dotpulse{0%,100%{opacity:.3}50%{opacity:1}}
+.item.pend{opacity:.62}
+.item.pend .amt{font-style:italic}
+
 .note{color:var(--dim);font-size:.84rem;font-weight:300;line-height:1.55;margin-top:18px}
 .total{display:flex;align-items:baseline;justify-content:space-between;
   padding:18px 0 6px;border-top:1px solid var(--hair-2);margin-top:8px}
@@ -1175,7 +1181,7 @@ function snapWrite(d){
 }
 
 /* ── Boot ── */
-const APPVER = 'v22';
+const APPVER = 'v23';
 
 function boot(){
   try{ $('vStamp').textContent = APPVER; }catch(e){}
@@ -2428,7 +2434,7 @@ function renderList(items){
   }
   el.innerHTML = ITEMS.map((it,i)=>{
     const d = String(it.date || '--').split('-');
-    return '<div class="item">'
+    return '<div class="item' + (it.pending ? ' pend' : '') + '">'
       + '<span class="tick ' + (it.type==='income'?'in':'') + '"></span>'
       + '<span class="txt">'
         + '<span class="t1">' + esc(it.description || it.category) + (it.fixed ? PIN : '') + '</span>'
@@ -2436,7 +2442,9 @@ function renderList(items){
       + '</span>'
       + '<span class="amt num ' + (it.type==='income'?'in':'out') + '">'
         + (it.type==='income'?'+':'−') + n2(it.amount) + ' €</span>'
-      + '<button class="edit" onclick="openEdit(' + i + ')" aria-label="Επεξεργασία">' + PEN + '</button>'
+      + (it.pending
+          ? '<span class="edit" aria-hidden="true" style="opacity:.4">' + PEN + '</span>'
+          : '<button class="edit" onclick="openEdit(' + i + ')" aria-label="Επεξεργασία">' + PEN + '</button>')
     + '</div>';
   }).join('');
 }
@@ -2619,29 +2627,126 @@ function collect(){
   if(e.fixed && !e.description){ toast('Δώσε περιγραφή στο πάγιο (π.χ. ΔΕΗ)', true); return null; }
   return e;
 }
+/* ── Αισιόδοξη καταχώρηση (v23) ──
+ *
+ * Το Apps Script χρειάζεται 2-4 δευτερόλεπτα και αυτό ΔΕΝ εξαφανίζεται:
+ * είναι cold start + redirect + Sheets I/O. Αυτό που εξαφανίζεται είναι η
+ * αναμονή του χρήστη. Δείχνουμε αμέσως το αποτέλεσμα σαν να πέτυχε, στέλνουμε
+ * στο παρασκήνιο, και όταν έρθει η αληθινή απάντηση την επιβάλλουμε.
+ * Αν αποτύχει, ξετυλίγουμε την αλλαγή και το λέμε.
+ */
+
+let PENDING = 0;      /* πόσες εγγραφές ταξιδεύουν αυτή τη στιγμή */
+
+function syncing(on){
+  PENDING += on ? 1 : -1;
+  if(PENDING < 0) PENDING = 0;
+  status(PENDING ? 'sync' : '');
+}
+
+/** Εφαρμόζει τοπικά μια νέα κίνηση. Επιστρέφει συνάρτηση αναίρεσης. */
+function applyLocalAdd(entry){
+  const amount = Number(entry.amount);
+  const inView = VIEW && entry.date >= VIEW.from && entry.date <= VIEW.to;
+  const passesFilter = !FILTER.length || (entry.type === 'expense' && FILTER.indexOf(entry.category) !== -1);
+
+  const snapItems = ITEMS.slice();
+  const snapSummary = SUMMARY ? JSON.parse(JSON.stringify(SUMMARY)) : null;
+  const snapCat = BYCAT.slice();
+
+  if(inView){
+    /* Προσωρινό row: αρνητικό, ώστε να μη μπερδευτεί ποτέ με αληθινό */
+    ITEMS.unshift({
+      type: entry.type, row: -1, date: entry.date,
+      category: entry.category, description: entry.description || '',
+      amount: amount, fixed: !!entry.fixed, noStat: !!entry.noStat, pending: true
+    });
+    ITEMS.sort((a,b)=> a.date < b.date ? 1 : a.date > b.date ? -1 : 0);
+  }
+
+  if(SUMMARY && inView){
+    const s = SUMMARY;
+    if(entry.type === 'income'){
+      s.income = (s.income || 0) + amount;
+    }else{
+      s.expenseAll = (s.expenseAll || 0) + amount;
+      if(passesFilter) s.expense = (s.expense || 0) + amount;
+    }
+    s.balance = (s.income || 0) - (s.expense || 0);
+    if(s.runningBalance !== undefined){
+      s.runningBalance = (s.carryover || 0) + (s.income || 0) - (s.expenseAll || 0);
+    }
+    s.count = (s.count || 0) + 1;
+
+    if(entry.type === 'expense' && Array.isArray(s.daily)){
+      const i = Math.round((new Date(entry.date) - new Date(s.from)) / 86400000);
+      if(i >= 0 && i < s.daily.length) s.daily[i] += amount;
+    }
+
+    if(entry.type === 'expense'){
+      const hit = BYCAT.find(x => x.category === entry.category);
+      if(hit) hit.amount += amount;
+      else BYCAT.push({ category: entry.category, amount: amount });
+      BYCAT.sort((a,b)=> b.amount - a.amount);
+    }
+  }
+
+  try{
+    if(SUMMARY) render(SUMMARY);
+    renderList(ITEMS);
+  }catch(e){ /* η αναίρεση παραμένει διαθέσιμη */ }
+
+  return function undo(){
+    ITEMS.length = 0; snapItems.forEach(x => ITEMS.push(x));
+    BYCAT.length = 0; snapCat.forEach(x => BYCAT.push(x));
+    if(snapSummary){ SUMMARY = snapSummary; }
+    try{ if(SUMMARY) render(SUMMARY); renderList(ITEMS); }catch(e){}
+  };
+}
+
 async function save(){
   const entry = collect();
   if(!entry) return;
+
+  /* Η επεξεργασία μένει σύγχρονη: αλλάζει υπάρχουσα γραμμή και η αστοχία
+     εκεί είναι πιο μπερδεμένη από μια απλή προσθήκη. */
+  if(EDIT) return saveEdit(entry);
+
+  closeAll();                       /* κλείνει ΑΜΕΣΩΣ */
+  const undo = applyLocalAdd(entry);
+  syncing(true);
+  toast('Καταχωρήθηκε');
+
+  try{
+    const d = await api('add', { entry: entry });
+    LASTRAW = d; LASTSRC = 'δίκτυο';
+    paint(d); snapWrite(d);         /* η αλήθεια του server επιβάλλεται */
+  }catch(e){
+    undo();
+    queue(entry);
+    toast('Χωρίς σύνδεση — θα σταλεί αργότερα', true);
+  }finally{
+    syncing(false);
+  }
+}
+
+async function saveEdit(entry){
   const btn = $('saveBtn');
   const label = btn.textContent;
   btn.disabled = true; btn.textContent = 'Αποθήκευση…';
   try{
-    const d = EDIT ? await api('update', {target: EDIT, entry: entry})
-                   : await api('add',    {entry: entry});
+    const d = await api('update', { target: EDIT, entry: entry });
+    LASTRAW = d; LASTSRC = 'δίκτυο';
     paint(d); snapWrite(d); status('');
-    toast(EDIT ? 'Αποθηκεύτηκε' : 'Καταχωρήθηκε');
+    toast('Αποθηκεύτηκε');
     closeAll();
   }catch(e){
-    if(EDIT){ toast(e.message, true); }
-    else{
-      queue(entry); status('off');
-      toast('Χωρίς σύνδεση — θα σταλεί αργότερα');
-      closeAll();
-    }
+    toast(e.message, true);
   }finally{
     btn.disabled = false; btn.textContent = label;
   }
 }
+
 function askDelete(){
   const b = $('delBtn');
   if(!armed){

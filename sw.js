@@ -1,5 +1,5 @@
 /* Προϋπολογισμός — service worker (offline app shell) */
-const CACHE = 'proyp-v22';   /* v22: μονή ημερομηνία στο φίλτρο δείχνει τις κινήσεις της μέρας */
+const CACHE = 'proyp-v23';   /* v23: αισιόδοξη καταχώρηση + cache backend */
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
