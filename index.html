@@ -1181,7 +1181,7 @@ function snapWrite(d){
 }
 
 /* ── Boot ── */
-const APPVER = 'v23';
+const APPVER = 'v24';
 
 function boot(){
   try{ $('vStamp').textContent = APPVER; }catch(e){}
@@ -2422,6 +2422,12 @@ function renderBreakdown(filtered){
 const PIN = '<svg class="pinico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v6M12 8l4 4v3H8v-3l4-4zM12 15v7"/></svg>';
 const PEN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>';
 
+/** Νεότερη πρώτη· μέσα στην ίδια μέρα, ό,τι καταχωρήθηκε αργότερα πάει πάνω. */
+function cmpRecent(a, b){
+  if(a.date !== b.date) return a.date < b.date ? 1 : -1;
+  return (b.row || 0) - (a.row || 0);
+}
+
 function renderList(items){
   ITEMS = items || [];
   const el = $('list');
@@ -2657,11 +2663,13 @@ function applyLocalAdd(entry){
   if(inView){
     /* Προσωρινό row: αρνητικό, ώστε να μη μπερδευτεί ποτέ με αληθινό */
     ITEMS.unshift({
-      type: entry.type, row: -1, date: entry.date,
+      /* Ψηλό row ώστε να κάθεται στην κορυφή της ημέρας του μέχρι να
+         επιβεβαιωθεί· το αρνητικό θα το έστελνε στο τέλος. */
+      type: entry.type, row: 1e9, date: entry.date,
       category: entry.category, description: entry.description || '',
       amount: amount, fixed: !!entry.fixed, noStat: !!entry.noStat, pending: true
     });
-    ITEMS.sort((a,b)=> a.date < b.date ? 1 : a.date > b.date ? -1 : 0);
+    ITEMS.sort(cmpRecent);
   }
 
   if(SUMMARY && inView){
