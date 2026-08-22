@@ -14,7 +14,11 @@
 :root{
   --bg:#000000; --sur:#0B0B0C; --sur-2:#141416;
   --hair:rgba(255,255,255,.09); --hair-2:rgba(255,255,255,.16);
-  --fg:#F4F3F0; --dim:#7A7A7E; --faint:#3A3A3D;
+  --fg:#F4F3F0; --dim:#A8A8AF; --faint:#7E7E86;
+  /* --dim 8.3:1 και --faint 4.9:1 προς το φόντο των πάνελ. Πριν ήταν 4.6
+     και 1.85 — το δεύτερο ήταν ουσιαστικά αόρατο. Τα διακοσμητικά
+     (βελάκια, διαχωριστικά) πάνε στο --hint, που μένει διακριτικό. */
+  --hint:#5A5A61;
   --amber:#E9C46A; --clay:#E0937C; --mint:#A9CFB4;
   --f:'Outfit',system-ui,-apple-system,sans-serif;
 }
@@ -124,7 +128,7 @@ button{font-family:var(--f);cursor:pointer;border:0;color:inherit}
 .pod .p2{font-size:.78rem;color:var(--dim);margin-top:3px;font-weight:300}
 .pod .pa{font-size:1.3rem;font-weight:200;color:var(--clay);white-space:nowrap;letter-spacing:-.02em}
 .meter{height:2px;border-radius:2px;background:var(--clay);opacity:.55;margin-top:8px}
-.arw{color:var(--faint);flex:none}
+.arw{color:var(--hint);flex:none}
 
 /* ── Καμπύλη ── */
 /* Κάθε μέρα είναι ΚΟΥΜΠΙ σε όλο το ύψος — μεγάλος στόχος για το δάχτυλο,
@@ -149,12 +153,12 @@ button{font-family:var(--f);cursor:pointer;border:0;color:inherit}
 .sec span{font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);
   font-weight:400;white-space:nowrap}
 .sec .hair{flex:1}
-.sec .cnt{color:var(--faint);letter-spacing:.04em}
+.sec .cnt{color:var(--faint);letter-spacing:.04em;font-weight:400}
 
 /* Ανάλυση ανά κατηγορία */
 .brow{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--hair)}
 .brow .bn{flex:1;font-size:1rem;font-weight:300;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.brow .bc{font-size:.78rem;color:var(--faint);font-weight:300}
+.brow .bc{font-size:.79rem;color:var(--faint);font-weight:400;letter-spacing:.005em}
 .brow .ba{font-size:1.15rem;font-weight:200;color:var(--clay);white-space:nowrap}
 .brow .bar{position:absolute;left:0;bottom:0;height:1px;background:var(--clay);opacity:.5}
 .bwrap{position:relative}
@@ -166,7 +170,7 @@ button{font-family:var(--f);cursor:pointer;border:0;color:inherit}
 .item .txt{flex:1;min-width:0}
 .item .t1{font-size:clamp(.98rem, 4vw, 1.1rem);font-weight:400;letter-spacing:-.005em;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:7px}
-.item .t2{font-size:.86rem;color:var(--dim);margin-top:4px;font-weight:300}
+.item .t2{font-size:.86rem;color:var(--dim);margin-top:4px;font-weight:300;letter-spacing:.004em}
 .item .amt{font-size:clamp(1.05rem, 4.4vw, 1.35rem);font-weight:200;white-space:nowrap;letter-spacing:-.02em}
 .item .amt.out{color:var(--clay)} .item .amt.in{color:var(--mint)}
 .item .edit{width:36px;height:36px;flex:none;display:flex;align-items:center;justify-content:center;
@@ -220,7 +224,7 @@ button{font-family:var(--f);cursor:pointer;border:0;color:inherit}
   color:var(--dim);font-size:.9rem;font-weight:300;transition:.18s;white-space:nowrap;
   display:flex;align-items:center;gap:7px}
 .chip.on{background:var(--fg);color:#000;border-color:var(--fg);font-weight:400}
-.chip .cs{font-size:.78rem;opacity:.65;font-variant-numeric:tabular-nums}
+.chip .cs{font-size:.78rem;opacity:.85;font-variant-numeric:tabular-nums}
 
 .field{margin-bottom:26px}
 .field input{width:100%;background:transparent;border:0;border-bottom:1px solid var(--hair);
@@ -270,7 +274,7 @@ input[type=date]{color-scheme:dark}
 .range{display:flex;gap:12px}
 .range .f{flex:1}
 .divider{display:flex;align-items:center;gap:12px;margin:24px 0 18px}
-.divider span{font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
+.divider span{font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;color:var(--hint)}
 
 /* ── Μενού ── */
 .menu{display:flex;flex-direction:column;gap:2px}
@@ -283,7 +287,7 @@ input[type=date]{color-scheme:dark}
 .mrow .mt1{display:block;font-size:1.05rem;font-weight:400}
 .mrow .mt2{display:block;font-size:.8rem;color:var(--dim);margin-top:2px;font-weight:300;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mrow .marw{color:var(--faint);flex:none}
+.mrow .marw{color:var(--hint);flex:none}
 
 /* ── Ανάλυση εβδομάδας ── */
 .wbar{display:flex;align-items:center;gap:12px;padding:11px 0}
@@ -319,7 +323,7 @@ input[type=date]{color-scheme:dark}
   font-family:var(--f);color:inherit;border-radius:10px;transition:.18s}
 .wbar.wtap:active{background:var(--sur-2)}
 .wbar.wsel{background:var(--sur-2)}
-.wbar .wo{width:32px;flex:none;text-align:right;font-size:.7rem;color:var(--faint);
+.wbar .wo{width:34px;flex:none;text-align:right;font-size:.73rem;color:var(--faint);font-weight:400;
   font-variant-numeric:tabular-nums}
 .wdet{background:var(--sur-2);border:1px solid var(--hair);border-radius:18px;
   padding:18px 16px 16px;margin-top:16px}
@@ -345,8 +349,8 @@ input[type=date]{color-scheme:dark}
 .vstamp{font-size:.6rem;letter-spacing:.14em;color:var(--faint);font-weight:400;
   border:1px solid var(--hair);border-radius:100px;padding:2px 8px;margin-left:8px;
   vertical-align:middle;text-transform:none}
-.tsub{display:block;font-size:.68rem;letter-spacing:.06em;text-transform:none;
-  color:var(--faint);margin-top:3px}
+.tsub{display:block;font-size:.7rem;letter-spacing:.06em;text-transform:none;
+  color:var(--dim);margin-top:3px;font-weight:400}
 .fgrp{width:100%;background:transparent;font-family:var(--f);text-align:left}
 .fsub{padding:2px 0 10px 2px}
 .fline{display:flex;align-items:center;gap:12px;width:100%;background:transparent;
@@ -713,8 +717,8 @@ input[type=date]{color-scheme:dark}
   <span class="lbl">Περίοδος</span>
   <div class="chips" id="fPresets" style="margin-bottom:12px"></div>
   <div class="range">
-    <div class="f"><input type="date" id="fFrom" onchange="onFilterRange()"></div>
-    <div class="f"><input type="date" id="fTo" onchange="onFilterRange()"></div>
+    <div class="f"><input type="date" id="fFrom" onchange="onFilterRange('from')"></div>
+    <div class="f"><input type="date" id="fTo" onchange="onFilterRange('to')"></div>
   </div>
   <p class="note" id="fPer" style="margin:10px 0 20px"></p>
 
@@ -737,10 +741,10 @@ input[type=date]{color-scheme:dark}
 
   <div id="fDescWrap" hidden>
     <div class="total" style="margin-top:16px">
-      <span class="tl">Σύνολο αναζήτησης<span class="tsub" id="fSumN"></span></span>
+      <span class="tl"><span id="fSumLbl">Σύνολο αναζήτησης</span><span class="tsub" id="fSumN"></span></span>
       <span class="tv num" id="fSum">0,00 €</span>
     </div>
-    <span class="lbl" style="margin-top:22px">Ανά περιγραφή</span>
+    <span class="lbl" style="margin-top:22px" id="fListLbl">Ανά περιγραφή</span>
     <div id="fDescList"></div>
   </div>
   <button class="save" style="margin-top:18px" onclick="applyFilter()">Εφαρμογή στην αρχική</button>
@@ -1171,7 +1175,7 @@ function snapWrite(d){
 }
 
 /* ── Boot ── */
-const APPVER = 'v21';
+const APPVER = 'v22';
 
 function boot(){
   try{ $('vStamp').textContent = APPVER; }catch(e){}
@@ -1488,6 +1492,7 @@ let FROWS = [];            /* οι κινήσεις της περιόδου, α�
 let FBUSY = false;
 
 const FPRESETS = [
+  { k:'d0', label:'Σήμερα' },
   { k:'m0', label:'Τρέχων μήνας' },
   { k:'m1', label:'Προηγούμενος' },
   { k:'q',  label:'Τρίμηνο' },
@@ -1498,6 +1503,7 @@ const FPRESETS = [
 
 function fRange(k){
   const n = new Date(), y = n.getFullYear(), m = n.getMonth(), d = n.getDate();
+  if(k === 'd0') return { from: iso(y, m, d), to: iso(y, m, d) };
   if(k === 'm0') return { from: iso(y, m, 1), to: iso(y, m, lastDay(y, m)) };
   if(k === 'm1'){
     const py = m === 0 ? y - 1 : y, pm = m === 0 ? 11 : m - 1;
@@ -1536,7 +1542,23 @@ function renderFPresets(){
   });
 }
 
-function onFilterRange(){ renderFPresets(); loadFilter(); }
+/* Αν το «από» ξεπεράσει το «έως» (ή αντίστροφα), το άλλο άκρο ακολουθεί.
+   Έτσι, διαλέγοντας απλώς μια ημερομηνία, το εύρος γίνεται ΑΥΤΗ η μέρα —
+   πριν, ένα ασύμβατο ζεύγος έπεφτε σιωπηλά πίσω στον τρέχοντα μήνα. */
+function onFilterRange(which){
+  const f = $('fFrom').value, t = $('fTo').value;
+  if(f && t && f > t){
+    if(which === 'to') $('fFrom').value = t; else $('fTo').value = f;
+  }
+  renderFPresets();
+  loadFilter();
+}
+
+/** Πόσες μέρες πιάνει η επιλεγμένη περίοδο. */
+function fSpan(){
+  const p = fPeriod();
+  return Math.round((new Date(p.to) - new Date(p.from)) / 86400000) + 1;
+}
 
 async function loadFilter(){
   const p = fPeriod();
@@ -1627,21 +1649,60 @@ function filterGroups(rows){
 function renderFilterDesc(){
   const wrap = $('fDescWrap');
   const rows = filterMatches();
+  const span = fSpan();
 
-  if(!FQ.trim() && !DRAFT.length){ wrap.hidden = true; return; }
+  /* ΠΟΤΕ δείχνουμε τη λίστα:
+     - με όρο αναζήτησης ή επιλεγμένες κατηγορίες (όπως πάντα), ή
+     - όταν η περίοδος είναι αρκετά στενή ώστε να τη θες αναλυτικά.
+     Χωρίς τον τρίτο κανόνα, διαλέγοντας μία ημερομηνία δεν εμφανιζόταν
+     τίποτα — που ήταν και το πρόβλημα. */
+  const narrow = span <= 7;
+  if(!FQ.trim() && !DRAFT.length && !narrow){ wrap.hidden = true; return; }
   wrap.hidden = false;
+
+  const single = span === 1;
+  const p = fPeriod();
+
+  $('fSumLbl').textContent = single ? 'Σύνολο ημέρας'
+    : (FQ.trim() ? 'Σύνολο αναζήτησης' : 'Σύνολο περιόδου');
 
   if(!rows.length){
     $('fSum').textContent = '0,00 €';
-    $('fSumN').textContent = 'καμία κίνηση';
-    $('fDescList').innerHTML = '<div class="empty">Καμία κίνηση με αυτά τα κριτήρια</div>';
+    $('fSumN').textContent = single ? dmy(p.from) : 'καμία κίνηση';
+    $('fListLbl').textContent = single ? 'Κινήσεις ημέρας' : 'Ανά περιγραφή';
+    $('fDescList').innerHTML = '<div class="empty">'
+      + (single ? 'Καμία κίνηση στις ' + dmy(p.from) : 'Καμία κίνηση με αυτά τα κριτήρια')
+      + '</div>';
     return;
   }
 
   const g = filterGroups(rows);
   $('fSum').textContent = n2(g.total) + ' €';
-  $('fSumN').textContent = rows.length + (rows.length === 1 ? ' κίνηση' : ' κινήσεις')
+
+  /* ── Μία μέρα: οι κινήσεις σκέτες, με τη σειρά. Η ομαδοποίηση ανά
+     περιγραφή δεν προσφέρει τίποτα όταν μιλάμε για μία ημέρα. ── */
+  if(single){
+    $('fSumN').textContent = dmy(p.from) + ' · ' + rows.length
+      + (rows.length === 1 ? ' κίνηση' : ' κινήσεις');
+    $('fListLbl').textContent = 'Κινήσεις ημέρας';
+
+    const sorted = rows.slice().sort((x,y) => y.it.amount - x.it.amount);
+    const max = Math.max.apply(null, sorted.map(r => r.it.amount).concat([1]));
+    $('fDescList').innerHTML = sorted.map(r =>
+      '<div class="brow bwrap">'
+      + '<span class="bn">' + hl(r.it.description || r.it.category)
+        + '<span class="bc"> · ' + esc(r.it.category) + (r.it.noStat ? ' · εκτός στατιστικής' : '') + '</span>'
+      + '</span>'
+      + '<span class="ba num">' + n2(r.it.amount) + ' €</span>'
+      + '<span class="bar" style="width:' + Math.round(r.it.amount / max * 100) + '%"></span>'
+      + '</div>').join('');
+    return;
+  }
+
+  $('fSumN').textContent = (narrow && !FQ.trim() && !DRAFT.length ? dmy(p.from) + ' – ' + dmy(p.to) + ' · ' : '')
+    + rows.length + (rows.length === 1 ? ' κίνηση' : ' κινήσεις')
     + ' σε ' + g.list.length + (g.list.length === 1 ? ' περιγραφή' : ' περιγραφές');
+  $('fListLbl').textContent = 'Ανά περιγραφή';
 
   const max = Math.max.apply(null, g.list.map(x => x.amount).concat([1]));
 
@@ -1694,8 +1755,8 @@ function printFilter(){
     + '.sub td{color:#666;font-size:12px;padding-left:18px}'
     + '@media print{body{margin:12mm}}'
     + '</style></head><body>'
-    + '<h1>Προϋπολογισμός — αποτέλεσμα φίλτρου</h1>'
-    + '<div class="meta">Περίοδος ' + dmy(p.from) + ' – ' + dmy(p.to)
+    + '<h1>Προϋπολογισμός — ' + (fSpan() === 1 ? 'κινήσεις ημέρας' : 'αποτέλεσμα φίλτρου') + '</h1>'
+    + '<div class="meta">' + (fSpan() === 1 ? dmy(p.from) : 'Περίοδος ' + dmy(p.from) + ' – ' + dmy(p.to))
       + ' &nbsp;·&nbsp; Κατηγορίες: ' + esc(cats)
       + (FQ.trim() ? ' &nbsp;·&nbsp; Αναζήτηση: «' + esc(FQ.trim()) + '»' : '')
       + ' &nbsp;·&nbsp; ' + rows.length + ' κινήσεις'
@@ -1706,7 +1767,8 @@ function printFilter(){
     + catList.map(x => '<tr><td>' + esc(x.c) + '</td><td class="n">' + n2(x.a) + ' €</td></tr>').join('')
     + '</table>'
 
-    + '<h2>Ανά περιγραφή</h2><table><tr><th>Περιγραφή</th><th class="n">Κινήσεις</th><th class="n">Ποσό</th></tr>'
+    + '<h2>' + (fSpan() === 1 ? 'Κινήσεις' : 'Ανά περιγραφή') + '</h2>'
+    + '<table><tr><th>Περιγραφή</th><th class="n">Κινήσεις</th><th class="n">Ποσό</th></tr>'
     + g.list.map(grp =>
         '<tr><td>' + esc(grp.label) + '</td><td class="n">' + grp.rows.length + '</td>'
         + '<td class="n">' + n2(grp.amount) + ' €</td></tr>'
