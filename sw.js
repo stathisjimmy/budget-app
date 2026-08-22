@@ -1,5 +1,5 @@
 /* Προϋπολογισμός — service worker (offline app shell) */
-const CACHE = 'proyp-v24';   /* v24: νεότερη κίνηση πάντα πρώτη, και μέσα στην ίδια μέρα */
+const CACHE = 'proyp-v25';   /* v25: ουρά εισερχόμενων ειδοποιήσεων */
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

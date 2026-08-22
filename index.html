@@ -340,6 +340,21 @@ input[type=date]{color-scheme:dark}
 .tag.hot{color:var(--amber);border-color:rgba(233,196,106,.38)}
 /* ── Αναζήτηση περιγραφών στο φίλτρο (v16) ── */
 .hlt{color:var(--amber);font-weight:400}
+.badge{display:inline-block;min-width:19px;padding:1px 6px;margin-left:8px;
+  border-radius:100px;background:var(--amber);color:#000;font-size:.68rem;
+  font-weight:500;text-align:center;vertical-align:middle}
+.inb{width:100%;background:transparent;font-family:var(--f);text-align:left;
+  display:flex;align-items:center;gap:13px;padding:15px 0;border-bottom:1px solid var(--hair)}
+.inb .ic{width:8px;height:8px;flex:none;border-radius:50%;background:var(--clay)}
+.inb .ic.in{background:var(--mint)}
+.inb .it{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.inb .i1{font-size:.96rem;font-weight:300;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.inb .i2{font-size:.78rem;color:var(--faint);font-weight:400}
+.inb .ia{flex:none;font-variant-numeric:tabular-nums;font-weight:300}
+.inb .ia.out{color:var(--clay)} .inb .ia.in{color:var(--mint)}
+.irej{flex:none;width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+  border-radius:50%;background:transparent;color:var(--hint)}
+.irej:active{background:rgba(255,255,255,.07)}
 .chk{margin:10px 0 0;padding-left:20px;color:var(--dim);font-size:.84rem;
   font-weight:300;line-height:1.6}
 .chk li{margin-bottom:9px}
@@ -816,6 +831,11 @@ input[type=date]{color-scheme:dark}
   <div class="grab"></div>
   <h2>Μενού <span class="vstamp" id="vStamp"></span></h2>
   <div class="menu">
+    <button class="mrow" onclick="closeAll();openInbox()">
+      <span class="mi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h5l2 3h4l2-3h5"/><path d="M5 5h14l2 7v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-6z"/></svg></span>
+      <span class="mt"><span class="mt1">Εισερχόμενα<span class="badge" id="mInbN" hidden></span></span><span class="mt2" id="mInb">Ειδοποιήσεις προς έγκριση</span></span>
+      <svg class="marw" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
     <button class="mrow" onclick="closeAll();openDiag()">
       <span class="mi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/><path d="M12 8v5M12 16h.01"/></svg></span>
       <span class="mt"><span class="mt1">Διαγνωστικά</span><span class="mt2" id="mDiag">Κατάσταση σύνδεσης και δεδομένων</span></span>
@@ -853,6 +873,17 @@ input[type=date]{color-scheme:dark}
     </button>
   </div>
   <button class="ghost" style="margin-top:20px" onclick="closeAll()">Κλείσιμο</button>
+</div>
+
+<!-- Εισερχόμενα -->
+<div class="sheet" id="iSheet" role="dialog" aria-modal="true">
+  <div class="grab"></div>
+  <h2>Εισερχόμενα</h2>
+  <p class="note" style="margin:-8px 0 20px">Ειδοποιήσεις που έφτασαν από το κινητό. Τίποτα δεν καταχωρείται μόνο του — πάτα μία για να τη συμπληρώσεις και να την αποθηκεύσεις.</p>
+  <div id="iList"></div>
+  <button class="ghost" style="margin-top:18px" onclick="showHookHelp()">Πώς στήνεται</button>
+  <div id="iHelp" hidden></div>
+  <button class="ghost" onclick="closeAll()">Κλείσιμο</button>
 </div>
 
 <!-- Διαγνωστικά -->
@@ -1181,7 +1212,7 @@ function snapWrite(d){
 }
 
 /* ── Boot ── */
-const APPVER = 'v24';
+const APPVER = 'v25';
 
 function boot(){
   try{ $('vStamp').textContent = APPVER; }catch(e){}
@@ -1224,6 +1255,7 @@ function paint(d){
   BYCAT = (d.summary && d.summary.byCategory) || [];
   SUMMARY = d.summary || null;
   MONTH = d.month || null;
+  INBOX = d.inbox || [];
 
   /* Κάθε κομμάτι σε δικό του try: αν σκάσει η σύνοψη, οι ΚΙΝΗΣΕΙΣ πρέπει
      να εμφανιστούν ούτως ή άλλως. Πριν, ένα σφάλμα στο render() σταματούσε
@@ -1234,7 +1266,9 @@ function paint(d){
   try{ renderFilterBar(); }catch(e){ fail.push('φίλτρο: ' + e.message); }
   try{ renderAlert(); }catch(e){ fail.push('ειδοποίηση: ' + e.message); }
 
-  try{ syncMenuLabels(); }catch(e){}
+  try{ syncMenuLabels(); renderInboxBadge();
+       if(!$('iSheet').hidden && $('iSheet').classList.contains('on')) renderInboxList();
+  }catch(e){}
 
   if(fail.length){
     LASTERR = fail.join(' | ');
@@ -1244,6 +1278,95 @@ function paint(d){
 }
 
 /* ── Μενού ── */
+/* ── Εισερχόμενα: ουρά επιβεβαίωσης (v25) ──
+   Η εφαρμογή αυτοματισμού στέλνει το κείμενο της ειδοποίησης· εδώ το
+   βλέπεις, διαλέγεις κατηγορία και αποθηκεύεις. Ποτέ αυτόματη εγγραφή. */
+
+let INBOX = [];
+let FROM_INBOX = null;     /* ποια εγγραφή της ουράς συμπληρώνει η φόρμα */
+
+function renderInboxBadge(){
+  const n = INBOX.length;
+  const b = $('mInbN');
+  b.hidden = !n;
+  b.textContent = n || '';
+  $('mInb').textContent = n
+    ? n + (n === 1 ? ' ειδοποίηση προς έγκριση' : ' ειδοποιήσεις προς έγκριση')
+    : 'Καμία εκκρεμότητα';
+}
+
+function openInbox(){
+  $('iHelp').hidden = true;
+  renderInboxList();
+  openSheet('iSheet');
+}
+
+function renderInboxList(){
+  if(!INBOX.length){
+    $('iList').innerHTML = '<div class="empty">Καμία εκκρεμής ειδοποίηση</div>';
+    return;
+  }
+  $('iList').innerHTML = INBOX.map((x,i)=>
+    '<div class="inb">'
+    + '<span class="ic ' + (x.type === 'income' ? 'in' : '') + '"></span>'
+    + '<button class="it" style="background:transparent;font-family:var(--f);text-align:left" '
+      + 'onclick="fillFromInbox(' + i + ')">'
+      + '<span class="i1">' + esc(x.description || '(χωρίς περιγραφή)') + '</span>'
+      + '<span class="i2">' + dmy(x.date) + ' · ' + (x.type === 'income' ? 'έσοδο' : 'έξοδο') + '</span>'
+    + '</button>'
+    + '<span class="ia ' + (x.type === 'income' ? 'in' : 'out') + '">'
+      + (x.type === 'income' ? '+' : '−') + n2(x.amount) + ' €</span>'
+    + '<button class="irej" onclick="rejectInbox(' + i + ')" aria-label="Απόρριψη">'
+      + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>'
+    + '</button>'
+    + '</div>').join('');
+}
+
+/** Ανοίγει τη φόρμα καταχώρησης προσυμπληρωμένη από την ειδοποίηση. */
+function fillFromInbox(i){
+  const x = INBOX[i];
+  if(!x) return;
+
+  closeAll();
+  openNew();                       /* το openNew μηδενίζει το FROM_INBOX… */
+  FROM_INBOX = x.row;              /* …οπότε η σύνδεση μπαίνει ΜΕΤΑ */
+  setType(x.type === 'income' ? 'income' : 'expense');
+  $('fAmt').value = String(x.amount);
+  $('fDesc').value = x.description || '';
+  $('fDate').value = x.date;
+  toast('Διάλεξε κατηγορία και αποθήκευσε');
+}
+
+async function rejectInbox(i){
+  const x = INBOX[i];
+  if(!x) return;
+  INBOX.splice(i,1);                 /* φεύγει αμέσως από την οθόνη */
+  renderInboxList(); renderInboxBadge();
+  try{
+    const d = await api('inboxReject', { row: x.row });
+    INBOX = d.items || [];
+    renderInboxList(); renderInboxBadge();
+  }catch(e){
+    toast(e.message, true);
+  }
+}
+
+function showHookHelp(){
+  const h = $('iHelp');
+  if(!h.hidden){ h.hidden = true; return; }
+  h.hidden = false;
+  h.innerHTML = '<span class="lbl" style="margin-top:20px">Ρύθμιση στο κινητό</span>'
+    + '<ol class="chk">'
+    + '<li>Εγκατάστησε <b>MacroDroid</b> ή <b>Automate</b> και δώσε του άδεια «Πρόσβαση σε ειδοποιήσεις».</li>'
+    + '<li>Νέος κανόνας: έναυσμα <b>Notification received</b>, από την εφαρμογή Google Wallet ή της τράπεζάς σου.</li>'
+    + '<li>Ενέργεια: <b>HTTP POST</b> στο URL της εφαρμογής, με <code>Content-Type: text/plain</code>.</li>'
+    + '<li>Σώμα αιτήματος:<br><code>{"action":"hook","token":"ΤΟ_TOKEN_ΣΟΥ",'
+      + '"text":"[notification_text]","title":"[app_name]"}</code></li>'
+    + '<li>Τα <code>[notification_text]</code> και <code>[app_name]</code> είναι μεταβλητές της εφαρμογής αυτοματισμού — αντικατέστησέ τα με τα δικά της.</li>'
+    + '</ol>'
+    + '<p class="note">Το ποσό και η κατεύθυνση βγαίνουν από το κείμενο. Η κατηγορία τη διαλέγεις εσύ εδώ — δεν μαντεύεται από ειδοποίηση.</p>';
+}
+
 /* ── Διαγνωστικά (v18) ──
    Χωρίς αυτά, ένα «δεν φέρνει κινήσεις» σημαίνει μαντεψιά. Εδώ φαίνεται
    ΑΚΡΙΒΩΣ τι ζητήθηκε, τι γύρισε, και πού κόλλησε. */
@@ -2512,6 +2635,7 @@ function openNew(){
   $('delBtn').hidden = true;
   $('fAmt').value = ''; $('fDesc').value = '';
   $('fDate').value = new Date().toISOString().slice(0,10);
+  FROM_INBOX = null;
   setFixed(false); setNoStat(false);
   setType('expense');
   openSheet('sheet');
@@ -2535,7 +2659,7 @@ function openEdit(i){
 function openSheet(id){ $('scrim').classList.add('on'); $(id).classList.add('on'); }
 function closeAll(){
   $('scrim').classList.remove('on');
-  ['sheet','pSheet','fSheet','cSheet','insSheet','rSheet','dSheet','mSheet','wSheet','aSheet','gSheet'].forEach(id=>$(id).classList.remove('on'));
+  ['sheet','pSheet','fSheet','cSheet','insSheet','rSheet','dSheet','mSheet','wSheet','aSheet','gSheet','iSheet'].forEach(id=>$(id).classList.remove('on'));
   $('thumb').style.display = 'none';
   CUR_DAY = null;
   [...$('strip').children].forEach(col => col.classList.remove('sel'));   // σβήσε την επιλογή
@@ -2625,7 +2749,8 @@ function collect(){
     description: $('fDesc').value.trim(),
     amount: $('fAmt').value,
     fixed: TYPE === 'expense' && IS_FIXED,
-    noStat: TYPE === 'expense' && NO_STAT
+    noStat: TYPE === 'expense' && NO_STAT,
+    inboxRow: FROM_INBOX || undefined
   };
   if(!e.category){ toast('Διάλεξε κατηγορία', true); return null; }
   if(!e.date){ toast('Βάλε ημερομηνία', true); return null; }
