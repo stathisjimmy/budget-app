@@ -314,7 +314,7 @@ input[type=date]{color-scheme:dark}
 .frow .fx{width:34px;height:34px;flex:none;display:flex;align-items:center;justify-content:center;
   border-radius:50%;color:var(--faint);background:transparent}
 .frow .fx:active{background:var(--sur-2);color:var(--clay)}
-/* ── Στατιστική εβδομάδας (v13) ── */
+/* ── Στατιστική περιόδου (v13) ── */
 .wbar.wtap{width:100%;background:transparent;border:0;padding:11px 6px;text-align:left;
   font-family:var(--f);color:inherit;border-radius:10px;transition:.18s}
 .wbar.wtap:active{background:var(--sur-2)}
@@ -372,21 +372,6 @@ input[type=date]{color-scheme:dark}
 .qdot{width:6px;height:6px;flex:none;border-radius:50%;background:transparent;transition:.2s}
 .qdot.on{background:var(--amber);animation:qpulse 1s infinite}
 @keyframes qpulse{0%,100%{opacity:.25}50%{opacity:1}}
-.qsum{border:1px solid var(--hair);border-radius:22px;padding:20px 18px;margin-top:26px;background:var(--sur-2)}
-.qsl{font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);font-weight:400}
-.qsv{font-size:2.1rem;font-weight:200;letter-spacing:-.03em;margin:6px 0 8px}
-.qsm{font-size:.8rem;color:var(--dim);font-weight:300;line-height:1.5}
-.qduo{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:18px;
-  padding-top:16px;border-top:1px solid var(--hair)}
-.qduo>div{display:flex;flex-direction:column;gap:3px;min-width:0}
-.qduo .qk{font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
-.qduo .qn{font-size:1.02rem;font-weight:300;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.qduo .qn.out{color:var(--clay)}
-.qduo .qn.in{color:var(--mint)}
-.qduo .qc{font-size:.68rem;color:var(--faint)}
-.qit{width:100%;background:transparent;font-family:var(--f);text-align:left}
-.brow .ba.in{color:var(--mint)}
-.brow .bar.in{background:var(--mint)}
 .wsec{margin-top:22px;padding-top:4px}
 .wsec .lbl{margin-bottom:6px}
 .wday{width:100%;background:transparent;font-family:var(--f);text-align:left}
@@ -492,7 +477,7 @@ input[type=date]{color-scheme:dark}
   .sheet h2{margin-top:0;font-size:1.7rem;margin-bottom:22px}
   .sheet .lbl{font-size:.66rem;letter-spacing:.2em}
 
-  #qSheet,#wSheet,#rSheet,#insSheet{width:min(940px,90vw)}
+  #wSheet,#rSheet,#insSheet{width:min(940px,90vw)}
   #dSheet,#gSheet{width:min(680px,84vw)}
 
   /* Η φόρμα καταχώρησης σε δύο στήλες */
@@ -513,8 +498,6 @@ input[type=date]{color-scheme:dark}
   .brow{padding:14px 0}
   .st{padding:11px 0;font-size:.94rem}
   .wdet{padding:22px 20px 20px}
-  .qsv{font-size:2.5rem}
-  .qduo{gap:14px}
   .menu .mrow{padding:15px 14px}
 
   /* Η στατιστική εβδομάδας: μπάρες και λεπτομέρεια δίπλα-δίπλα */
@@ -522,6 +505,7 @@ input[type=date]{color-scheme:dark}
     column-gap:30px;align-items:start}
   #wBody>*{grid-column:1/-1}
   #wBody #wBars,#wBody #wWarn{grid-column:1}
+  #statRow{display:flex}
   #wBody #wDetail{grid-column:2;grid-row:span 6;margin-top:0}
   #wDetail:empty{display:none}
 
@@ -536,8 +520,7 @@ input[type=date]{color-scheme:dark}
   .wrap.setup{max-width:520px;padding-top:14vh;margin-left:auto}
 
   /* ── Ποντίκι ── */
-  .item:hover,.brow:hover,.mrow:hover,.wday:hover,.fline:hover,.qit:hover,
-  .wbar.wtap:hover{background:var(--sur-2)}
+  .item:hover,.brow:hover,.mrow:hover,.wday:hover,.fline:hover,  .wbar.wtap:hover{background:var(--sur-2)}
   .chip:hover{border-color:var(--hair-2)}
   .tool:hover,.arrow:hover,.qx:hover{background:rgba(255,255,255,.07)}
   .act:hover{transform:translateY(-1px)}
@@ -686,6 +669,14 @@ input[type=date]{color-scheme:dark}
     </div>
     <button class="sw" id="fixSw" onclick="toggleFixed()" aria-label="Πάγιο"></button>
   </div>
+  <div class="toggle" id="statRow">
+    <span class="tx">
+      <span class="tt">Εκτός στατιστικής</span>
+      <span class="ts">Μετράει κανονικά στο υπόλοιπο, αλλά δεν επηρεάζει τους μέσους όρους στη Στατιστική περιόδου.</span>
+    </span>
+    <button class="sw" id="statSw" onclick="toggleNoStat()" aria-label="Εκτός στατιστικής"></button>
+  </div>
+
   <button class="save" id="saveBtn" onclick="save()">Καταχώρηση</button>
   <button class="danger" id="delBtn" onclick="askDelete()" hidden>Διαγραφή</button>
 </div>
@@ -717,7 +708,17 @@ input[type=date]{color-scheme:dark}
 <div class="sheet" id="cSheet" role="dialog" aria-modal="true">
   <div class="grab"></div>
   <h2>Φίλτρο κατηγοριών</h2>
-  <p class="note" style="margin:-8px 0 20px">Διάλεξε μία ή περισσότερες κατηγορίες εξόδων. Το σύνολο και οι κινήσεις θα αφορούν μόνο αυτές, για την περίοδο που βλέπεις.</p>
+  <p class="note" style="margin:-8px 0 18px">Διάλεξε περίοδο και κατηγορίες. Χωρίς επιλογή περιόδου, ισχύει ο τρέχων μήνας.</p>
+
+  <span class="lbl">Περίοδος</span>
+  <div class="chips" id="fPresets" style="margin-bottom:12px"></div>
+  <div class="range">
+    <div class="f"><input type="date" id="fFrom" onchange="onFilterRange()"></div>
+    <div class="f"><input type="date" id="fTo" onchange="onFilterRange()"></div>
+  </div>
+  <p class="note" id="fPer" style="margin:10px 0 20px"></p>
+
+  <span class="lbl">Κατηγορίες</span>
   <div class="chips" id="fChips"></div>
   <div class="total">
     <span class="tl">Σύνολο επιλογής</span>
@@ -742,7 +743,8 @@ input[type=date]{color-scheme:dark}
     <span class="lbl" style="margin-top:22px">Ανά περιγραφή</span>
     <div id="fDescList"></div>
   </div>
-  <button class="save" style="margin-top:18px" onclick="applyFilter()">Εφαρμογή</button>
+  <button class="save" style="margin-top:18px" onclick="applyFilter()">Εφαρμογή στην αρχική</button>
+  <button class="ghost" onclick="printFilter()">Εκτύπωση αποτελέσματος</button>
   <button class="ghost" onclick="clearFilter()">Καθαρισμός φίλτρου</button>
 </div>
 
@@ -804,11 +806,6 @@ input[type=date]{color-scheme:dark}
   <div class="grab"></div>
   <h2>Μενού <span class="vstamp" id="vStamp"></span></h2>
   <div class="menu">
-    <button class="mrow" onclick="closeAll();openSearch()">
-      <span class="mi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span>
-      <span class="mt"><span class="mt1">Αναζήτηση</span><span class="mt2">Κινήσεις και τζίρος ανά κατηγορία ή περιγραφή</span></span>
-      <svg class="marw" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-    </button>
     <button class="mrow" onclick="closeAll();openDiag()">
       <span class="mi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/><path d="M12 8v5M12 16h.01"/></svg></span>
       <span class="mt"><span class="mt1">Διαγνωστικά</span><span class="mt2" id="mDiag">Κατάσταση σύνδεσης και δεδομένων</span></span>
@@ -831,7 +828,7 @@ input[type=date]{color-scheme:dark}
     </button>
     <button class="mrow" onclick="closeAll();openWeek()">
       <span class="mi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18M6 20v-6M11 20V8M16 20v-9M21 20V5"/><path d="M3 4h6M6 4v3"/></svg></span>
-      <span class="mt"><span class="mt1">Στατιστική εβδομάδας</span><span class="mt2" id="mWeeks">Δικό της εύρος ημερομηνιών</span></span>
+      <span class="mt"><span class="mt1">Στατιστική περιόδου</span><span class="mt2" id="mWeeks">Δικό της εύρος ημερομηνιών</span></span>
       <svg class="marw" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
     </button>
     <button class="mrow" onclick="closeAll();openFixed()">
@@ -869,73 +866,6 @@ input[type=date]{color-scheme:dark}
   <button class="ghost" onclick="closeAll()">Κλείσιμο</button>
 </div>
 
-<!-- Αναζήτηση -->
-<div class="sheet" id="qSheet" role="dialog" aria-modal="true">
-  <div class="grab"></div>
-  <h2>Αναζήτηση</h2>
-
-  <div class="qbox">
-    <span class="qi"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span>
-    <input type="search" id="qText" placeholder="περιγραφή ή κατηγορία" autocomplete="off"
-           oninput="onQType()" onkeydown="if(event.key==='Enter'){this.blur();runSearch()}">
-    <span class="qdot" id="qDot"></span>
-    <button class="qx" onclick="qClear()" aria-label="Καθαρισμός">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-    </button>
-  </div>
-
-  <div class="seg" id="qType" style="margin-bottom:20px">
-    <button class="on" onclick="setQType('all')">Όλα</button>
-    <button onclick="setQType('expense')">Έξοδα</button>
-    <button onclick="setQType('income')">Έσοδα</button>
-  </div>
-
-  <span class="lbl">Περίοδος</span>
-  <div class="chips" id="qPresets" style="margin-bottom:14px"></div>
-  <div class="range">
-    <div class="f"><input type="date" id="qFrom" onchange="renderQPresets();runSearch()"></div>
-    <div class="f"><input type="date" id="qTo" onchange="renderQPresets();runSearch()"></div>
-  </div>
-
-  <span class="lbl" style="margin-top:24px">Κατηγορίες</span>
-  <p class="note" style="margin:-6px 0 12px">Άφησέ τες κενές για όλες.</p>
-  <div class="chips" id="qChips"></div>
-
-  <div id="qBody" hidden>
-    <div class="qsum">
-      <div class="qsl" id="qTurnLbl">Τζίρος</div>
-      <div class="qsv num" id="qTurn">—</div>
-      <div class="qsm" id="qMeta"></div>
-      <div class="qduo" id="qDuo" hidden>
-        <div><span class="qk">Έξοδα</span><span class="qn num out" id="qOut">—</span><span class="qc" id="qOutN"></span></div>
-        <div><span class="qk">Έσοδα</span><span class="qn num in" id="qIn">—</span><span class="qc" id="qInN"></span></div>
-        <div><span class="qk">Καθαρό</span><span class="qn num" id="qNet">—</span><span class="qc">διαφορά</span></div>
-      </div>
-      <div class="qsm" id="qAvg" style="margin-top:12px"></div>
-    </div>
-
-    <div id="qCatsWrap" hidden>
-      <span class="lbl" style="margin-top:26px">Ανά κατηγορία</span>
-      <div id="qCats"></div>
-    </div>
-
-    <div id="qDescWrap" hidden>
-      <span class="lbl" style="margin-top:26px">Ανά περιγραφή</span>
-      <div id="qDesc"></div>
-    </div>
-
-    <div id="qMonWrap" hidden>
-      <span class="lbl" style="margin-top:26px">Ανά μήνα</span>
-      <div id="qMon"></div>
-    </div>
-
-    <div class="sec" style="margin-top:26px"><span>Κινήσεις</span><span class="cnt" id="qCnt"></span><hr class="hair"></div>
-    <div id="qList"></div>
-  </div>
-
-  <button class="ghost" style="margin-top:22px" onclick="closeAll()">Κλείσιμο</button>
-</div>
-
 <!-- Ανάλυση εβδομάδας (γρήγορη, στην τρέχουσα περίοδο) -->
 <div class="sheet" id="aSheet" role="dialog" aria-modal="true">
   <div class="grab"></div>
@@ -948,14 +878,14 @@ input[type=date]{color-scheme:dark}
   <span class="lbl">Μέρες με τα περισσότερα έξοδα</span>
   <div id="aDays"></div>
 
-  <p class="note">Σκέτα αθροίσματα για την περίοδο που βλέπεις. Για μέσους όρους, διάμεσο και μεγαλύτερο εύρος, δες τη «Στατιστική εβδομάδας».</p>
+  <p class="note">Σκέτα αθροίσματα για την περίοδο που βλέπεις. Για μέσους όρους, διάμεσο και μεγαλύτερο εύρος, δες τη «Στατιστική περιόδου».</p>
   <button class="ghost" style="margin-top:22px" onclick="closeAll()">Κλείσιμο</button>
 </div>
 
-<!-- Στατιστική εβδομάδας -->
+<!-- Στατιστική περιόδου -->
 <div class="sheet" id="wSheet" role="dialog" aria-modal="true">
   <div class="grab"></div>
-  <h2>Στατιστική εβδομάδας</h2>
+  <h2>Στατιστική περιόδου</h2>
   <p class="note" style="margin:-8px 0 20px">Ποιες μέρες ξοδεύεις πραγματικά πιο πολύ. Όσο μεγαλύτερο το εύρος, τόσο ασφαλέστερο το συμπέρασμα.</p>
 
   <span class="lbl">Εύρος</span>
@@ -986,15 +916,7 @@ input[type=date]{color-scheme:dark}
       <button onclick="setWeekMetric('median')">Διάμεσος</button>
       <button onclick="setWeekMetric('total')">Σύνολο</button>
     </div>
-    <p class="note" id="wMetricNote" style="margin:0 0 10px"></p>
-
-    <div class="toggle" style="margin-bottom:18px">
-      <span class="tx">
-        <span class="tt">Μόνο μέρες με έξοδο</span>
-        <span class="ts">Αγνοεί τις μέρες που δεν ξόδεψες τίποτα. Απαντά στο «πόσα ξοδεύω όταν ξοδεύω».</span>
-      </span>
-      <button class="sw on" id="wOnlySw" onclick="toggleWeekOnly()" aria-label="Μόνο μέρες με έξοδο"></button>
-    </div>
+    <p class="note" id="wMetricNote" style="margin:0 0 16px"></p>
 
     <div id="wBars"></div>
     <p class="note" id="wWarn"></p>
@@ -1055,7 +977,7 @@ const MONTHS = ['Ιανουάριος','Φεβρουάριος','Μάρτιος'
 const MSHORT = ['Ιαν','Φεβ','Μάρ','Απρ','Μάι','Ιούν','Ιούλ','Αύγ','Σεπ','Οκτ','Νοέ','Δεκ'];
 
 let CATS = {expense:[],income:[]}, FIXED = [], ITEMS = [], BYCAT = [], MONTH = null, SUMMARY = null;
-let TYPE = 'expense', CAT = '', IS_FIXED = false;
+let TYPE = 'expense', CAT = '', IS_FIXED = false, NO_STAT = false;
 let EDIT = null;
 let VIEW = null;
 let FILTER = [];        // ενεργό φίλτρο κατηγοριών
@@ -1249,7 +1171,7 @@ function snapWrite(d){
 }
 
 /* ── Boot ── */
-const APPVER = 'v20';
+const APPVER = 'v21';
 
 function boot(){
   try{ $('vStamp').textContent = APPVER; }catch(e){}
@@ -1531,23 +1453,6 @@ function clearFilterSearch(){
   renderFilterDesc();
 }
 
-/** Οι κινήσεις που περνούν τα τρέχοντα κριτήρια: έξοδα, τυχόν επιλεγμένες
-    κατηγορίες, και όλοι οι όροι αναζήτησης (ΚΑΙ, όχι Ή). */
-function filterMatches(){
-  const terms = fold(FQ).split(/\s+/).filter(t => t.length > 0);
-  const out = [];
-  ITEMS.forEach((it, i)=>{
-    if(it.type !== 'expense') return;
-    if(DRAFT.length && DRAFT.indexOf(it.category) === -1) return;
-    if(terms.length){
-      const hay = fold(it.category + ' ' + (it.description || ''));
-      for(let k = 0; k < terms.length; k++) if(hay.indexOf(terms[k]) === -1) return;
-    }
-    out.push({ i: i, it: it });
-  });
-  return out;
-}
-
 /** Έντονα τα κομμάτια που ταίριαξαν, ώστε να φαίνεται ΓΙΑΤΙ βρέθηκε η κίνηση. */
 function hl(text){
   const src = String(text || '');
@@ -1573,12 +1478,156 @@ function hl(text){
   return out + (open ? '</b>' : '');
 }
 
+/* ── Φίλτρο κατηγοριών με ΔΙΚΗ ΤΟΥ περίοδο (v21) ──
+   Μέχρι τη v20 δούλευε μόνο πάνω στον μήνα που έβλεπες, τοπικά. Τώρα έχει
+   δικές του ημερομηνίες, οπότε τα δεδομένα έρχονται από τον server με το
+   action «search». Το κείμενο αναζήτησης εξακολουθεί να φιλτράρει ΤΟΠΙΚΑ
+   πάνω στο αποτέλεσμα, ώστε η πληκτρολόγηση να μένει ακαριαία. */
+
+let FROWS = [];            /* οι κινήσεις της περιόδου, από τον server */
+let FBUSY = false;
+
+const FPRESETS = [
+  { k:'m0', label:'Τρέχων μήνας' },
+  { k:'m1', label:'Προηγούμενος' },
+  { k:'q',  label:'Τρίμηνο' },
+  { k:'h',  label:'Εξάμηνο' },
+  { k:'y0', label:'Έτος' },
+  { k:'y1', label:'Προηγούμενο έτος' }
+];
+
+function fRange(k){
+  const n = new Date(), y = n.getFullYear(), m = n.getMonth(), d = n.getDate();
+  if(k === 'm0') return { from: iso(y, m, 1), to: iso(y, m, lastDay(y, m)) };
+  if(k === 'm1'){
+    const py = m === 0 ? y - 1 : y, pm = m === 0 ? 11 : m - 1;
+    return { from: iso(py, pm, 1), to: iso(py, pm, lastDay(py, pm)) };
+  }
+  if(k === 'y0') return { from: iso(y, 0, 1), to: iso(y, 11, 31) };
+  if(k === 'y1') return { from: iso(y-1, 0, 1), to: iso(y-1, 11, 31) };
+  /* Τρίμηνο/εξάμηνο: τα ΤΕΛΕΥΤΑΙΑ 3 ή 6 γεμάτα ημερολογιακά μήνες μαζί με τον
+     τρέχοντα — πιο χρήσιμο από «90 μέρες πίσω», που κόβει μήνες στη μέση. */
+  const back = k === 'q' ? 2 : 5;
+  const st = new Date(y, m - back, 1);
+  return { from: iso(st.getFullYear(), st.getMonth(), 1), to: iso(y, m, lastDay(y, m)) };
+}
+
+/** Χωρίς επιλογή, ισχύει ο τρέχων μήνας. */
+function fPeriod(){
+  const f = $('fFrom').value, t = $('fTo').value;
+  if(f && t && f <= t) return { from: f, to: t };
+  return fRange('m0');
+}
+
+function renderFPresets(){
+  const p = fPeriod();
+  const box = $('fPresets');
+  box.innerHTML = '';
+  FPRESETS.forEach(pr=>{
+    const r = fRange(pr.k);
+    const b = document.createElement('button');
+    b.className = 'chip' + (r.from === p.from && r.to === p.to ? ' on' : '');
+    b.textContent = pr.label;
+    b.onclick = ()=>{
+      $('fFrom').value = r.from; $('fTo').value = r.to;
+      renderFPresets(); loadFilter();
+    };
+    box.appendChild(b);
+  });
+}
+
+function onFilterRange(){ renderFPresets(); loadFilter(); }
+
+async function loadFilter(){
+  const p = fPeriod();
+  $('fPer').textContent = dmy(p.from) + ' – ' + dmy(p.to)
+    + (($('fFrom').value && $('fTo').value) ? '' : ' (προεπιλογή: τρέχων μήνας)');
+
+  if(FBUSY) return;
+  FBUSY = true;
+  $('fTotal').textContent = '…';
+  try{
+    /* cats: [] ρητά — θέλουμε ΟΛΕΣ τις κινήσεις της περιόδου και φιλτράρουμε
+       τοπικά, αλλιώς κάθε πάτημα κατηγορίας θα ήταν νέο αίτημα. */
+    const r = await api('search', { from: p.from, to: p.to, q: '', type: 'expense', cats: [] });
+    FROWS = r.items || [];
+    if(r.truncated) toast('Πολλές κινήσεις — δείχνονται οι 300 πιο πρόσφατες', true);
+  }catch(e){
+    FROWS = [];
+    toast(e.message, true);
+  }finally{
+    FBUSY = false;
+    renderFilterChips();
+  }
+}
+
+function renderFilterChips(){
+  const box = $('fChips');
+
+  /* Σύνολα ανά κατηγορία από την περίοδο του φίλτρου, όχι από την αρχική */
+  const amounts = {};
+  FROWS.forEach(it => amounts[it.category] = (amounts[it.category] || 0) + it.amount);
+
+  const known = CATS.expense.slice();
+  Object.keys(amounts).forEach(c => { if(known.indexOf(c) === -1) known.push(c); });
+
+  box.innerHTML = '';
+  known.forEach(c=>{
+    const b = document.createElement('button');
+    const on = DRAFT.indexOf(c) !== -1;
+    b.className = 'chip' + (on ? ' on' : '');
+    b.innerHTML = esc(c) + (amounts[c] ? '<span class="cs">' + n2(amounts[c]) + '</span>' : '');
+    b.onclick = ()=>{
+      const i = DRAFT.indexOf(c);
+      if(i === -1) DRAFT.push(c); else DRAFT.splice(i,1);
+      renderFilterChips();
+    };
+    box.appendChild(b);
+  });
+
+  const sum = DRAFT.length
+    ? DRAFT.reduce((a,c)=> a + (amounts[c] || 0), 0)
+    : Object.keys(amounts).reduce((a,c)=> a + amounts[c], 0);
+  $('fTotal').textContent = n2(sum) + ' €';
+
+  renderFilterDesc();
+}
+
+/** Οι κινήσεις που περνούν κατηγορίες + κείμενο αναζήτησης. */
+function filterMatches(){
+  const terms = fold(FQ).split(/\s+/).filter(t => t.length > 0);
+  const out = [];
+  FROWS.forEach((it, i)=>{
+    if(DRAFT.length && DRAFT.indexOf(it.category) === -1) return;
+    if(terms.length){
+      const hay = fold(it.category + ' ' + (it.description || ''));
+      for(let k = 0; k < terms.length; k++) if(hay.indexOf(terms[k]) === -1) return;
+    }
+    out.push({ i: i, it: it });
+  });
+  return out;
+}
+
+/** Ομαδοποίηση ανά περιγραφή — η κοινή βάση για οθόνη και εκτύπωση. */
+function filterGroups(rows){
+  const groups = {};
+  let total = 0;
+  rows.forEach(r=>{
+    const desc = String(r.it.description || '').trim();
+    const key = fold(desc) || '—';
+    if(!groups[key]) groups[key] = { key: key, label: desc || '(χωρίς περιγραφή)', amount: 0, rows: [] };
+    groups[key].amount += r.it.amount;
+    groups[key].rows.push(r);
+    total += r.it.amount;
+  });
+  const list = Object.keys(groups).map(k => groups[k]).sort((a,b) => b.amount - a.amount);
+  return { list: list, total: total };
+}
+
 function renderFilterDesc(){
   const wrap = $('fDescWrap');
   const rows = filterMatches();
 
-  /* Χωρίς όρο και χωρίς επιλεγμένες κατηγορίες δεν έχει νόημα να δείχνουμε
-     ολόκληρο τον μήνα σπασμένο ανά περιγραφή — μένει κρυφό. */
   if(!FQ.trim() && !DRAFT.length){ wrap.hidden = true; return; }
   wrap.hidden = false;
 
@@ -1589,46 +1638,94 @@ function renderFilterDesc(){
     return;
   }
 
-  /* Ομαδοποίηση ανά περιγραφή, με κλειδί την κανονικοποιημένη μορφή */
-  const groups = {};
-  let total = 0;
-  rows.forEach(r=>{
-    const desc = String(r.it.description || '').trim();
-    const key = fold(desc) || '—';
-    if(!groups[key]) groups[key] = { label: desc || '(χωρίς περιγραφή)', amount: 0, rows: [] };
-    groups[key].amount += r.it.amount;
-    groups[key].rows.push(r);
-    total += r.it.amount;
-  });
-
-  const list = Object.keys(groups).map(k => Object.assign({ key: k }, groups[k]))
-    .sort((a,b) => b.amount - a.amount);
-
-  $('fSum').textContent = n2(total) + ' €';
+  const g = filterGroups(rows);
+  $('fSum').textContent = n2(g.total) + ' €';
   $('fSumN').textContent = rows.length + (rows.length === 1 ? ' κίνηση' : ' κινήσεις')
-    + ' σε ' + list.length + (list.length === 1 ? ' περιγραφή' : ' περιγραφές');
+    + ' σε ' + g.list.length + (g.list.length === 1 ? ' περιγραφή' : ' περιγραφές');
 
-  const max = Math.max.apply(null, list.map(g => g.amount).concat([1]));
+  const max = Math.max.apply(null, g.list.map(x => x.amount).concat([1]));
 
-  $('fDescList').innerHTML = list.map(g=>{
-    let html = '<button class="brow bwrap fgrp" onclick="fToggle(\'' + esc(g.key).replace(/'/g, "\\'") + '\')">'
-      + '<span class="bn">' + hl(g.label)
-        + '<span class="bc"> · ' + g.rows.length + (g.rows.length === 1 ? ' κίνηση' : ' κινήσεις') + '</span>'
+  $('fDescList').innerHTML = g.list.map(grp=>{
+    let html = '<button class="brow bwrap fgrp" onclick="fToggle(\'' + esc(grp.key).replace(/'/g, "\\'") + '\')">'
+      + '<span class="bn">' + hl(grp.label)
+        + '<span class="bc"> · ' + grp.rows.length + (grp.rows.length === 1 ? ' κίνηση' : ' κινήσεις') + '</span>'
       + '</span>'
-      + '<span class="ba num">' + n2(g.amount) + ' €</span>'
-      + '<span class="bar" style="width:' + Math.round(g.amount / max * 100) + '%"></span>'
+      + '<span class="ba num">' + n2(grp.amount) + ' €</span>'
+      + '<span class="bar" style="width:' + Math.round(grp.amount / max * 100) + '%"></span>'
       + '</button>';
 
-    if(FOPEN === g.key){
-      html += '<div class="fsub">' + g.rows.map(r=>
-        '<button class="fline" onclick="closeAll();openEdit(' + r.i + ')">'
+    if(FOPEN === grp.key){
+      html += '<div class="fsub">' + grp.rows.map(r=>
+        '<div class="fline">'
         + '<span class="fd">' + dmy(r.it.date) + '</span>'
-        + '<span class="fc">' + esc(r.it.category) + '</span>'
+        + '<span class="fc">' + esc(r.it.category) + (r.it.noStat ? ' ·◦' : '') + '</span>'
         + '<span class="fa num">' + n2(r.it.amount) + ' €</span>'
-        + '</button>').join('') + '</div>';
+        + '</div>').join('') + '</div>';
     }
     return html;
   }).join('');
+}
+
+/** Εκτύπωση του αποτελέσματος. Χτίζεται σε κρυφό iframe, ώστε να τυπωθεί
+    μόνο ο πίνακας και όχι όλη η εφαρμογή με τα σκούρα χρώματα. */
+function printFilter(){
+  const rows = filterMatches();
+  if(!rows.length){ toast('Δεν υπάρχει τίποτα για εκτύπωση', true); return; }
+
+  const p = fPeriod();
+  const g = filterGroups(rows);
+  const cats = DRAFT.length ? DRAFT.join(', ') : 'όλες';
+
+  const byCat = {};
+  rows.forEach(r => byCat[r.it.category] = (byCat[r.it.category] || 0) + r.it.amount);
+  const catList = Object.keys(byCat).map(c => ({ c: c, a: byCat[c] })).sort((x,y) => y.a - x.a);
+
+  const html = '<!doctype html><html lang="el"><head><meta charset="utf-8">'
+    + '<title>Προϋπολογισμός — φίλτρο</title><style>'
+    + 'body{font:13px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;color:#111;margin:26px}'
+    + 'h1{font-size:19px;font-weight:600;margin:0 0 4px}'
+    + '.meta{color:#666;font-size:12px;margin-bottom:20px}'
+    + 'h2{font-size:14px;font-weight:600;margin:22px 0 8px;padding-bottom:5px;border-bottom:1px solid #ccc}'
+    + 'table{width:100%;border-collapse:collapse}'
+    + 'th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#666;padding:5px 6px;border-bottom:1px solid #ccc}'
+    + 'td{padding:5px 6px;border-bottom:1px solid #eee;vertical-align:top}'
+    + 'td.n,th.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}'
+    + 'tr.tot td{font-weight:600;border-top:2px solid #111;border-bottom:0;padding-top:8px}'
+    + '.sub td{color:#666;font-size:12px;padding-left:18px}'
+    + '@media print{body{margin:12mm}}'
+    + '</style></head><body>'
+    + '<h1>Προϋπολογισμός — αποτέλεσμα φίλτρου</h1>'
+    + '<div class="meta">Περίοδος ' + dmy(p.from) + ' – ' + dmy(p.to)
+      + ' &nbsp;·&nbsp; Κατηγορίες: ' + esc(cats)
+      + (FQ.trim() ? ' &nbsp;·&nbsp; Αναζήτηση: «' + esc(FQ.trim()) + '»' : '')
+      + ' &nbsp;·&nbsp; ' + rows.length + ' κινήσεις'
+      + ' &nbsp;·&nbsp; Εκτυπώθηκε ' + dmy(iso(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()))
+    + '</div>'
+
+    + '<h2>Ανά κατηγορία</h2><table><tr><th>Κατηγορία</th><th class="n">Ποσό</th></tr>'
+    + catList.map(x => '<tr><td>' + esc(x.c) + '</td><td class="n">' + n2(x.a) + ' €</td></tr>').join('')
+    + '</table>'
+
+    + '<h2>Ανά περιγραφή</h2><table><tr><th>Περιγραφή</th><th class="n">Κινήσεις</th><th class="n">Ποσό</th></tr>'
+    + g.list.map(grp =>
+        '<tr><td>' + esc(grp.label) + '</td><td class="n">' + grp.rows.length + '</td>'
+        + '<td class="n">' + n2(grp.amount) + ' €</td></tr>'
+        + grp.rows.map(r => '<tr class="sub"><td>' + dmy(r.it.date) + ' — ' + esc(r.it.category) + '</td>'
+            + '<td class="n"></td><td class="n">' + n2(r.it.amount) + ' €</td></tr>').join('')
+      ).join('')
+    + '<tr class="tot"><td>Σύνολο</td><td class="n">' + rows.length + '</td>'
+      + '<td class="n">' + n2(g.total) + ' €</td></tr>'
+    + '</table></body></html>';
+
+  const fr = document.createElement('iframe');
+  fr.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0';
+  document.body.appendChild(fr);
+  fr.srcdoc = html;
+  fr.onload = ()=>{
+    try{ fr.contentWindow.focus(); fr.contentWindow.print(); }
+    catch(e){ toast('Ο browser μπλόκαρε την εκτύπωση', true); }
+    setTimeout(()=>fr.remove(), 60000);
+  };
 }
 
 function fToggle(key){
@@ -1636,239 +1733,7 @@ function fToggle(key){
   renderFilterDesc();
 }
 
-/* ── Αναζήτηση κινήσεων (v15) ──
-   Δικό της εύρος και δικές της κατηγορίες, ανεξάρτητα από το φίλτρο της αρχικής.
-   Γι' αυτό στέλνει ρητά cats: QCATS — αλλιώς η api() θα έβαζε το FILTER. */
-
-let QRES = null;
-let QCATS = [];            /* κατηγορίες της αναζήτησης */
-let QTYPE = 'all';         /* all | expense | income */
-let QEXP = false;          /* ξεδιπλωμένη λίστα αποτελεσμάτων */
-let qTimer = null;
-
-/* Οι αυτόματες περίοδοι. Το «Όλα» πάει 10 χρόνια πίσω — αρκετά για κάθε
-   πραγματικό αρχείο, χωρίς να ζητάμε ημερομηνία-φάντασμα από τον χρήστη. */
-const QPRESETS = [
-  { k:'m0', label:'Τρέχων μήνας' },
-  { k:'m1', label:'Προηγούμενος' },
-  { k:'30', label:'30 μέρες' },
-  { k:'90', label:'3 μήνες' },
-  { k:'y0', label:'Φέτος' },
-  { k:'y1', label:'Πέρσι' },
-  { k:'all', label:'Όλα' }
-];
-
-function qRange(k){
-  const n = new Date(), y = n.getFullYear(), m = n.getMonth();
-  const today = iso(y, m, n.getDate());
-  if(k === 'm0')  return { from: iso(y, m, 1), to: iso(y, m, lastDay(y, m)) };
-  if(k === 'm1'){
-    const py = m === 0 ? y - 1 : y, pm = m === 0 ? 11 : m - 1;
-    return { from: iso(py, pm, 1), to: iso(py, pm, lastDay(py, pm)) };
-  }
-  if(k === 'y0')  return { from: iso(y, 0, 1), to: iso(y, 11, 31) };
-  if(k === 'y1')  return { from: iso(y-1, 0, 1), to: iso(y-1, 11, 31) };
-  if(k === 'all') return { from: iso(y-10, 0, 1), to: today };
-  const d = new Date(y, m, n.getDate() - (Number(k) - 1));
-  return { from: iso(d.getFullYear(), d.getMonth(), d.getDate()), to: today };
-}
-
-function openSearch(){
-  if(!$('qFrom').value){
-    const r = qRange('m0');
-    $('qFrom').value = r.from; $('qTo').value = r.to;
-  }
-  renderQPresets();
-  renderQChips();
-  openSheet('qSheet');
-  setTimeout(()=>$('qText').focus(), 380);   // αφού τελειώσει η κίνηση του sheet
-  runSearch();
-}
-
-function renderQPresets(){
-  const f = $('qFrom').value, t = $('qTo').value;
-  const box = $('qPresets');
-  box.innerHTML = '';
-  QPRESETS.forEach(pr=>{
-    const r = qRange(pr.k);
-    const b = document.createElement('button');
-    b.className = 'chip' + (r.from === f && r.to === t ? ' on' : '');
-    b.textContent = pr.label;
-    b.onclick = ()=>{ $('qFrom').value = r.from; $('qTo').value = r.to; renderQPresets(); runSearch(); };
-    box.appendChild(b);
-  });
-}
-
-function renderQChips(){
-  const box = $('qChips');
-  box.innerHTML = '';
-  const list = QTYPE === 'income' ? CATS.income
-             : QTYPE === 'expense' ? CATS.expense
-             : CATS.expense.concat(CATS.income);
-  list.forEach(c=>{
-    const b = document.createElement('button');
-    b.className = 'chip' + (QCATS.indexOf(c) !== -1 ? ' on' : '');
-    b.textContent = c;
-    b.onclick = ()=>{
-      const i = QCATS.indexOf(c);
-      if(i === -1) QCATS.push(c); else QCATS.splice(i,1);
-      renderQChips(); runSearch();
-    };
-    box.appendChild(b);
-  });
-}
-
-function setQType(t){
-  QTYPE = t;
-  const keys = ['all','expense','income'];
-  [...$('qType').children].forEach((b,i)=> b.classList.toggle('on', keys[i] === t));
-  /* Κατηγορίες που δεν ισχύουν πια για αυτόν τον τύπο, φεύγουν */
-  const valid = t === 'income' ? CATS.income : t === 'expense' ? CATS.expense : CATS.expense.concat(CATS.income);
-  QCATS = QCATS.filter(c => valid.indexOf(c) !== -1);
-  renderQChips();
-  runSearch();
-}
-
-/* Κάθε πάτημα πλήκτρου δεν γίνεται αίτημα — περιμένουμε να σταματήσεις να
-   γράφεις. Χωρίς αυτό, «σουπερμαρκετ» θα έστελνε 12 αιτήματα στο Apps Script. */
-function onQType(){
-  clearTimeout(qTimer);
-  $('qDot').classList.add('on');
-  qTimer = setTimeout(runSearch, 550);
-}
-
-function qClear(){
-  $('qText').value = '';
-  QCATS = [];
-  renderQChips();
-  runSearch();
-}
-
-async function runSearch(){
-  clearTimeout(qTimer);
-  const from = $('qFrom').value, to = $('qTo').value;
-  if(!from || !to){ toast('Συμπλήρωσε και τις δύο ημερομηνίες', true); return; }
-  if(from > to){ toast('Η αρχή είναι μετά το τέλος', true); return; }
-
-  QEXP = false;
-  $('qDot').classList.add('on');
-  try{
-    QRES = await api('search', {
-      from: from, to: to,
-      q: $('qText').value,
-      type: QTYPE,
-      cats: QCATS               /* παρακάμπτει το FILTER της αρχικής */
-    });
-    renderSearch();
-  }catch(e){
-    toast(e.message, true);
-  }finally{
-    $('qDot').classList.remove('on');
-  }
-}
-
-function renderSearch(){
-  const r = QRES;
-  if(!r) return;
-  $('qBody').hidden = false;
-
-  /* Σύνοψη: τζίρος πάνω, ανάλυση από κάτω */
-  const showBoth = r.type === 'all';
-  $('qTurn').textContent = n2(showBoth ? r.turnover : (r.type === 'income' ? r.income : r.expense)) + ' €';
-  $('qTurnLbl').textContent = showBoth ? 'Τζίρος' : (r.type === 'income' ? 'Σύνολο εσόδων' : 'Σύνολο εξόδων');
-
-  $('qMeta').textContent = r.count
-    ? r.count + (r.count === 1 ? ' κίνηση' : ' κινήσεις') + ' · ' + dmy(r.from) + ' – ' + dmy(r.to)
-      + (r.count > 1 ? ' · από ' + dmy(r.first) + ' έως ' + dmy(r.last) : '')
-    : dmy(r.from) + ' – ' + dmy(r.to);
-
-  const duo = $('qDuo');
-  if(showBoth && (r.countExpense || r.countIncome)){
-    duo.hidden = false;
-    $('qOut').textContent = n2(r.expense) + ' €';
-    $('qOutN').textContent = r.countExpense + (r.countExpense === 1 ? ' κίνηση' : ' κινήσεις');
-    $('qIn').textContent = n2(r.income) + ' €';
-    $('qInN').textContent = r.countIncome + (r.countIncome === 1 ? ' κίνηση' : ' κινήσεις');
-    $('qNet').textContent = (r.net >= 0 ? '+' : '−') + n2(Math.abs(r.net)) + ' €';
-    $('qNet').className = 'qn num ' + (r.net >= 0 ? 'in' : 'out');
-  }else{
-    duo.hidden = true;
-  }
-
-  const per = r.type === 'income' ? r.perIncome
-            : r.type === 'expense' ? r.perExpense
-            : (r.count ? r.turnover / r.count : 0);
-  $('qAvg').textContent = r.count ? 'Μέσος όρος ' + n2(per) + ' € ανά κίνηση' : '';
-
-  /* Ανά κατηγορία */
-  const bc = r.byCategory || [];
-  const cmax = Math.max.apply(null, bc.map(x=>x.amount).concat([1]));
-  $('qCats').innerHTML = bc.length ? bc.map(x=>
-    '<div class="brow bwrap">'
-    + '<span class="bn">' + esc(x.category)
-      + '<span class="bc"> · ' + x.count + (x.type === 'income' ? ' έσοδο' : ' έξοδο') + (x.count === 1 ? '' : 'α') + '</span>'
-    + '</span>'
-    + '<span class="ba num' + (x.type === 'income' ? ' in' : '') + '">' + n2(x.amount) + ' €</span>'
-    + '<span class="bar' + (x.type === 'income' ? ' in' : '') + '" style="width:' + Math.round(x.amount/cmax*100) + '%"></span>'
-    + '</div>').join('') : '';
-  $('qCatsWrap').hidden = !bc.length;
-
-  /* Ανά περιγραφή — έχει νόημα μόνο αν υπάρχουν πάνω από μία */
-  const bd = r.byDescription || [];
-  $('qDescWrap').hidden = bd.length < 2;
-  if(bd.length >= 2){
-    const dmax = Math.max.apply(null, bd.map(x=>x.amount).concat([1]));
-    $('qDesc').innerHTML = bd.map(x=>
-      '<div class="brow bwrap">'
-      + '<span class="bn">' + esc(x.description)
-        + '<span class="bc"> · ' + x.count + (x.count === 1 ? ' κίνηση' : ' κινήσεις') + '</span>'
-      + '</span>'
-      + '<span class="ba num' + (x.type === 'income' ? ' in' : '') + '">' + n2(x.amount) + ' €</span>'
-      + '<span class="bar' + (x.type === 'income' ? ' in' : '') + '" style="width:' + Math.round(x.amount/dmax*100) + '%"></span>'
-      + '</div>').join('');
-  }
-
-  /* Ανά μήνα — μόνο όταν το εύρος πιάνει πάνω από έναν μήνα */
-  const bm = r.byMonth || [];
-  $('qMonWrap').hidden = bm.length < 2;
-  if(bm.length >= 2){
-    const mmax = Math.max.apply(null, bm.map(x=>Math.max(x.expense, x.income)).concat([1]));
-    $('qMon').innerHTML = bm.slice().reverse().map(x=>{
-      const parts = x.month.split('-');
-      return '<div class="wbar">'
-        + '<span class="wn">' + MSHORT[Number(parts[1])-1] + ' ' + parts[0].slice(2) + '</span>'
-        + '<span class="wt">'
-          + (x.expense ? '<span class="wf" style="width:' + Math.round(x.expense/mmax*100) + '%"></span>' : '')
-        + '</span>'
-        + '<span class="wv">' + n2(x.expense || x.income) + ' €</span>'
-        + '</div>';
-    }).join('');
-  }
-
-  /* Οι κινήσεις */
-  const items = r.items || [];
-  const shown = QEXP ? items : items.slice(0, 15);
-  $('qCnt').textContent = r.count || '';
-  $('qList').innerHTML = items.length ? shown.map(it=>
-    '<button class="item qit" onclick="jumpToDay(\'' + it.date + '\')">'
-    + '<span class="tick ' + (it.type === 'income' ? 'in' : '') + '"></span>'
-    + '<span class="txt">'
-      + '<span class="t1">' + esc(it.description || it.category) + '</span>'
-      + '<span class="t2">' + dmy(it.date) + ' · ' + esc(it.category) + '</span>'
-    + '</span>'
-    + '<span class="amt num ' + (it.type === 'income' ? 'in' : 'out') + '">'
-      + (it.type === 'income' ? '+' : '−') + n2(it.amount) + ' €</span>'
-    + '</button>').join('')
-    + (items.length > shown.length
-        ? '<button class="wmore" onclick="qExpand()">Δείξε και τις υπόλοιπες ' + (items.length - shown.length) + '</button>'
-        : (QEXP && items.length > 15 ? '<button class="wmore" onclick="qExpand()">Λιγότερα</button>' : ''))
-    + (r.truncated ? '<p class="note">Τα σύνολα είναι πλήρη· η λίστα δείχνει τις 300 πιο πρόσφατες.</p>' : '')
-  : '<div class="empty">Καμία κίνηση με αυτά τα κριτήρια</div>';
-}
-
-function qExpand(){ QEXP = !QEXP; renderSearch(); }
-
-/* ── Στατιστική εβδομάδας (v13) ──
+/* ── Στατιστική περιόδου (v13) ──
    Δικό της εύρος ημερομηνιών, ανεξάρτητο από την περίοδο της αρχικής οθόνης,
    γιατί με έναν μήνα (4-5 εμφανίσεις ανά ημέρα) δεν βγαίνει στατιστική. */
 
@@ -1877,7 +1742,10 @@ let WMETRIC = 'mean';      /* mean | median | total */
 let WNOFIX = true;         /* εξαίρεση παγίων */
 let WSEL = -1;             /* ποια ημέρα εβδομάδας είναι ανοιχτή στη λεπτομέρεια */
 let WEXP = { cats:false, days:false, items:false };   /* ξεδιπλωμένες λίστες */
-let WONLY = true;          /* μέσοι όροι μόνο πάνω στις μέρες που είχαν έξοδο */
+/* Οι μέσοι όροι υπολογίζονται ΠΑΝΤΑ μόνο πάνω στις μέρες που είχαν έξοδο.
+   Οι μηδενικές μέρες θα κατέβαζαν τον μέσο όρο και θα έκρυβαν το μέγεθος
+   της τυπικής αγοράς. Το backend στέλνει και τα δύο· εμείς κρατάμε το ένα. */
+const WONLY = true;
 
 const WDAYS_PL = ['Κυριακές','Δευτέρες','Τρίτες','Τετάρτες','Πέμπτες','Παρασκευές','Σάββατα'];
 
@@ -1985,11 +1853,7 @@ function weekVal(d){
   return WONLY ? d.meanH : d.mean;
 }
 
-function toggleWeekOnly(){
-  WONLY = !WONLY;
-  $('wOnlySw').classList.toggle('on', WONLY);
-  renderWeek();
-}
+
 
 const WMETRIC_NOTE = {
   mean:   ['Σύνολο ÷ πόσες φορές εμφανίστηκε η μέρα μέσα στο εύρος. Η μόνη δίκαιη σύγκριση, γιατί δεν έχουν όλες οι μέρες ίδιο πλήθος εμφανίσεων.',
@@ -2013,7 +1877,7 @@ function renderWeek(){
     + ' · ' + Math.round(s.weeks) + ' εβδομάδες · ' + s.tx + ' κινήσεις · σύνολο ' + n2(s.total) + ' €'
     + (s.filtered ? ' · φιλτραρισμένο' : '');
 
-  $('wMetricNote').textContent = WMETRIC_NOTE[WMETRIC][WONLY ? 1 : 0];
+  $('wMetricNote').textContent = WMETRIC_NOTE[WMETRIC][1];
 
   /* Δευτέρα-πρώτα οπτικά, αλλά τα δεδομένα είναι 0=Κυριακή */
   const order = [1,2,3,4,5,6,0];
@@ -2125,7 +1989,7 @@ function renderWDetail(){
       skewMsg = 'Μόνο ' + d.hits + ' από τις ' + d.occurrences + ' είχαν έξοδο: το ποσό μαζεύεται από λίγες μεμονωμένες μέρες, όχι από συνήθεια.';
     }else if(WONLY && d.hits < d.occurrences / 2){
       skewMsg = 'Ξοδεύεις μόνο τις ' + d.hits + ' από τις ' + d.occurrences
-        + '. Ο μέσος όρος δείχνει το μέγεθος της αγοράς — για τη συχνότητα, σβήσε τον διακόπτη.';
+        + '. Ο μέσος όρος δείχνει το μέγεθος της αγοράς, όχι τη συχνότητα.';
     }else if(skew >= 1.8){
       skewMsg = 'Ο μέσος όρος είναι ' + skew.toFixed(1)
         + '× η διάμεσος: το βάρος έρχεται από λίγα μεγάλα έξοδα, όχι από συνήθεια.';
@@ -2541,32 +2405,15 @@ function renderFilterBar(){
 function openFilter(){
   DRAFT = FILTER.slice();
   $('fSearch').value = ''; FQ = ''; FOPEN = null;
+  if(!$('fFrom').value){
+    const r = fRange('m0');       /* προεπιλογή: τρέχων μήνας */
+    $('fFrom').value = r.from; $('fTo').value = r.to;
+  }
+  renderFPresets();
+  FROWS = [];
   renderFilterChips();
   openSheet('cSheet');
-}
-function renderFilterChips(){
-  const box = $('fChips');
-  const amounts = {};
-  BYCAT.forEach(b => amounts[b.category] = b.amount);
-
-  box.innerHTML = '';
-  CATS.expense.forEach(c=>{
-    const b = document.createElement('button');
-    const on = DRAFT.indexOf(c) !== -1;
-    b.className = 'chip' + (on ? ' on' : '');
-    b.innerHTML = esc(c) + (amounts[c] ? '<span class="cs">' + n2(amounts[c]) + '</span>' : '');
-    b.onclick = ()=>{
-      const i = DRAFT.indexOf(c);
-      if(i === -1) DRAFT.push(c); else DRAFT.splice(i,1);
-      renderFilterChips();
-    };
-    box.appendChild(b);
-  });
-
-  // Ζωντανό σύνολο της επιλογής (υπολογίζεται τοπικά, χωρίς αίτημα)
-  const sum = DRAFT.reduce((a,c)=> a + (amounts[c] || 0), 0);
-  $('fTotal').textContent = n2(sum) + ' €';
-  renderFilterDesc();          /* οι κατηγορίες περιορίζουν και την αναζήτηση */
+  loadFilter();
 }
 function applyFilter(){
   FILTER = DRAFT.slice();
@@ -2589,7 +2436,7 @@ function openNew(){
   $('delBtn').hidden = true;
   $('fAmt').value = ''; $('fDesc').value = '';
   $('fDate').value = new Date().toISOString().slice(0,10);
-  setFixed(false);
+  setFixed(false); setNoStat(false);
   setType('expense');
   openSheet('sheet');
 }
@@ -2606,12 +2453,13 @@ function openEdit(i){
   $('fDesc').value = it.description || '';
   $('fDate').value = it.date;
   setFixed(!!it.fixed);
+  setNoStat(!!it.noStat);
   openSheet('sheet');
 }
 function openSheet(id){ $('scrim').classList.add('on'); $(id).classList.add('on'); }
 function closeAll(){
   $('scrim').classList.remove('on');
-  ['sheet','pSheet','fSheet','cSheet','insSheet','rSheet','dSheet','mSheet','wSheet','aSheet','qSheet','gSheet'].forEach(id=>$(id).classList.remove('on'));
+  ['sheet','pSheet','fSheet','cSheet','insSheet','rSheet','dSheet','mSheet','wSheet','aSheet','gSheet'].forEach(id=>$(id).classList.remove('on'));
   $('thumb').style.display = 'none';
   CUR_DAY = null;
   [...$('strip').children].forEach(col => col.classList.remove('sel'));   // σβήσε την επιλογή
@@ -2622,7 +2470,9 @@ function setType(t){
   $('tE').classList.toggle('on', t==='expense');
   $('tI').classList.toggle('on', t==='income');
   $('fixRow').style.display = (t==='expense') ? 'flex' : 'none';
-  if(t !== 'expense') setFixed(false);
+  /* Η σημαία αφορά μόνο έξοδα: η στατιστική περιόδου μετράει έξοδα. */
+  $('statRow').style.display = (t==='expense') ? 'flex' : 'none';
+  if(t !== 'expense'){ setFixed(false); setNoStat(false); }
 
   const list = (t==='expense' ? CATS.expense : CATS.income);
   CAT = list[0] || '';
@@ -2649,6 +2499,8 @@ function pickCat(c){
 }
 function setFixed(v){ IS_FIXED = !!v; $('fixSw').classList.toggle('on', IS_FIXED); }
 function toggleFixed(){ setFixed(!IS_FIXED); }
+function setNoStat(v){ NO_STAT = !!v; $('statSw').classList.toggle('on', NO_STAT); }
+function toggleNoStat(){ setNoStat(!NO_STAT); }
 
 /* ── Σκανάρισμα ── */
 function pickPhoto(){ $('file').click(); }
@@ -2696,7 +2548,8 @@ function collect(){
     category: CAT,
     description: $('fDesc').value.trim(),
     amount: $('fAmt').value,
-    fixed: TYPE === 'expense' && IS_FIXED
+    fixed: TYPE === 'expense' && IS_FIXED,
+    noStat: TYPE === 'expense' && NO_STAT
   };
   if(!e.category){ toast('Διάλεξε κατηγορία', true); return null; }
   if(!e.date){ toast('Βάλε ημερομηνία', true); return null; }

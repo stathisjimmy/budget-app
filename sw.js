@@ -1,5 +1,5 @@
 /* Προϋπολογισμός — service worker (offline app shell) */
-const CACHE = 'proyp-v20';   /* v20: σφραγίδα BUILD από το backend + οδηγός ελέγχου project */
+const CACHE = 'proyp-v21';   /* v21: φίλτρο με δική του περίοδο + εκτύπωση, εκτός στατιστικής */
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
