@@ -103,7 +103,7 @@ button{font-family:var(--f);cursor:pointer;border:0;color:inherit}
   margin-top:8px;white-space:nowrap}
 .duo .v.in{color:var(--mint)} .duo .v.out{color:var(--clay)}
 
-/* ── Ειδοποίηση χαμηλού υπολοίπου ── */
+/* ── Μπάρα ειδοποίησης (v26: εκκρεμή εισερχόμενα) ── */
 .alert{display:none;align-items:center;gap:13px;padding:15px 16px;margin-bottom:20px;
   border-radius:18px;background:rgba(224,147,124,.08);border:1px solid rgba(224,147,124,.28)}
 .alert.on{display:flex}
@@ -602,12 +602,12 @@ input[type=date]{color-scheme:dark}
   </div>
 
   <div class="alert" id="alert">
-    <svg class="ai" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+    <svg class="ai" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
     <span class="at">
-      <span class="a1" id="alertTitle">Χαμηλό υπόλοιπο</span>
+      <span class="a1" id="alertTitle">Εκκρεμείς ειδοποιήσεις</span>
       <span class="a2" id="alertSub"></span>
     </span>
-    <button class="ab" onclick="openInsights()">Πού πήγαν</button>
+    <button class="ab" onclick="openInbox()">Δες τες</button>
   </div>
 
   <div class="fbar" id="fbar"></div>
@@ -1212,7 +1212,7 @@ function snapWrite(d){
 }
 
 /* ── Boot ── */
-const APPVER = 'v25';
+const APPVER = 'v26';
 
 function boot(){
   try{ $('vStamp').textContent = APPVER; }catch(e){}
@@ -1341,11 +1341,11 @@ async function rejectInbox(i){
   const x = INBOX[i];
   if(!x) return;
   INBOX.splice(i,1);                 /* φεύγει αμέσως από την οθόνη */
-  renderInboxList(); renderInboxBadge();
+  renderInboxList(); renderInboxBadge(); renderAlert();
   try{
     const d = await api('inboxReject', { row: x.row });
     INBOX = d.items || [];
-    renderInboxList(); renderInboxBadge();
+    renderInboxList(); renderInboxBadge(); renderAlert();
   }catch(e){
     toast(e.message, true);
   }
@@ -2280,15 +2280,30 @@ async function jumpToDay(dISO){
   openDay(dISO);
 }
 
-/* ── Ειδοποίηση χαμηλού υπολοίπου ── */
+/* ── Μπάρα εκκρεμών εισερχομένων (v26) ──
+ *
+ * Μέχρι τη v25 εδώ καθόταν το μήνυμα χαμηλού υπολοίπου. Τώρα η ίδια θέση, με
+ * ακριβώς το ίδιο στυλ, δείχνει πόσες ειδοποιήσεις από το κινητό περιμένουν
+ * έγκριση. Καμία εκκρεμότητα → καμία μπάρα.
+ *
+ * Η ΤΟΠΙΚΗ ειδοποίηση Android για χαμηλό υπόλοιπο ΔΕΝ καταργήθηκε: έφυγε μόνο
+ * η μπάρα από την οθόνη. Γι' αυτό το maybeNotify() καλείται ακόμη από εδώ.
+ */
 function renderAlert(){
   const el = $('alert');
-  if(!MONTH || !MONTH.low){ el.classList.remove('on'); return; }
+
+  maybeNotify();                     /* κρατάει το push χαμηλού υπολοίπου ζωντανό */
+
+  const n = INBOX.length;
+  if(!n){ el.classList.remove('on'); return; }
 
   el.classList.add('on');
-  $('alertTitle').textContent = 'Υπόλοιπο ' + eur(MONTH.balance);
-  $('alertSub').textContent = 'Κάτω από το όριο των ' + MONTH.threshold + ' € για αυτόν τον μήνα.';
-  maybeNotify();
+  $('alertTitle').textContent = n === 1
+    ? '1 εκκρεμής ειδοποίηση'
+    : n + ' εκκρεμείς ειδοποιήσεις';
+  $('alertSub').textContent = n === 1
+    ? 'Ήρθε από το κινητό και περιμένει κατηγορία.'
+    : 'Ήρθαν από το κινητό και περιμένουν κατηγορία.';
 }
 
 /** Τοπική ειδοποίηση Android — μία φορά τον μήνα, όταν ανοίγεις την εφαρμογή. */
