@@ -86,6 +86,8 @@ button{font-family:var(--f);cursor:pointer;border:0;color:inherit}
   color:var(--dim);font-family:var(--f);font-size:.82rem;font-weight:300;cursor:pointer;
   transition:background .15s,color .15s;white-space:nowrap}
 .accts button.on{background:var(--sur-2);color:var(--fg);font-weight:400}
+.iacct{font-size:.6rem;letter-spacing:.12em;color:var(--clay);border:1px solid var(--hair-2);
+  border-radius:100px;padding:2px 7px;align-self:center;flex:none}
 .accts .abadge{display:inline-block;margin-inline-start:5px;font-size:.7rem;color:var(--clay)}
 .hero.card .bal{color:var(--clay)}
 
@@ -625,7 +627,6 @@ input[type=date]{color-scheme:dark}
   <div class="accts" id="accts" role="tablist" aria-label="Λογαριασμός">
     <button id="acctBank" onclick="setAcct('τράπεζα')" role="tab">Τράπεζα</button>
     <button id="acctCard" onclick="setAcct('κάρτα')" role="tab">Κάρτα</button>
-    <button id="acctAll"  onclick="setAcct('all')"    role="tab">Όλα</button>
   </div>
 
   <div class="cols">
@@ -1039,10 +1040,11 @@ let TYPE = 'expense', CAT = '', IS_FIXED = false, NO_STAT = false;
 /* ── Λογαριασμός (v27) ──
    Προεπιλογή: τραπεζικός. Ό,τι υπήρχε πριν τη v27 είναι τραπεζικές κινήσεις,
    οπότε ανοίγοντας την εφαρμογή βλέπεις ακριβώς ό,τι έβλεπες πάντα. */
-const A_BANK = 'τράπεζα', A_CARD = 'κάρτα', A_ALL = 'all';
+const A_BANK = 'τράπεζα', A_CARD = 'κάρτα';
 let ACCT = (function(){
-  try{ const v = localStorage.getItem('acct');
-       return (v === A_CARD || v === A_ALL) ? v : A_BANK; }
+  /* Μόνο δύο λογαριασμοί. Το παλιό «all» που μπορεί να έχει μείνει στο
+     localStorage από τη v27 πέφτει πίσω στην τράπεζα. */
+  try{ return localStorage.getItem('acct') === A_CARD ? A_CARD : A_BANK; }
   catch(e){ return A_BANK; }
 })();
 const isCard = () => ACCT === A_CARD;
@@ -1239,7 +1241,7 @@ function snapWrite(d){
 }
 
 /* ── Boot ── */
-const APPVER = 'v27';
+const APPVER = 'v28';
 
 function boot(){
   try{ $('vStamp').textContent = APPVER; }catch(e){}
@@ -1325,7 +1327,6 @@ function paint(d){
 function renderAccts(){
   $('acctBank').classList.toggle('on', ACCT === A_BANK);
   $('acctCard').classList.toggle('on', ACCT === A_CARD);
-  $('acctAll').classList.toggle('on',  ACCT === A_ALL);
   $('hero').classList.toggle('card', isCard());
 }
 
@@ -1345,6 +1346,7 @@ function setAcct(a){
 
 let INBOX = [];
 let FROM_INBOX = null;     /* ποια εγγραφή της ουράς συμπληρώνει η φόρμα */
+let FROM_INBOX_ACCT = null; /* και σε ποιον λογαριασμό ανήκει, κατά την ειδοποίηση */
 
 function renderInboxBadge(){
   const n = INBOX.length;
@@ -1370,10 +1372,15 @@ function renderInboxList(){
   $('iList').innerHTML = INBOX.map((x,i)=>
     '<div class="inb">'
     + '<span class="ic ' + (x.type === 'income' ? 'in' : '') + '"></span>'
+    + (x.account === A_CARD ? '<span class="iacct">ΚΑΡΤΑ</span>' : '')
     + '<button class="it" style="background:transparent;font-family:var(--f);text-align:left" '
       + 'onclick="fillFromInbox(' + i + ')">'
       + '<span class="i1">' + esc(x.description || '(χωρίς περιγραφή)') + '</span>'
-      + '<span class="i2">' + dmy(x.date) + ' · ' + (x.type === 'income' ? 'έσοδο' : 'έξοδο') + '</span>'
+      + '<span class="i2">' + dmy(x.date) + ' · '
+        + (x.account === A_CARD
+             ? (x.type === 'income' ? 'πληρωμή κάρτας' : 'χρέωση κάρτας')
+             : (x.type === 'income' ? 'έσοδο' : 'έξοδο'))
+        + '</span>'
     + '</button>'
     + '<span class="ia ' + (x.type === 'income' ? 'in' : 'out') + '">'
       + (x.type === 'income' ? '+' : '−') + n2(x.amount) + ' €</span>'
@@ -1397,6 +1404,7 @@ function fillFromInbox(i){
 
   openNew();                       /* το openNew μηδενίζει το FROM_INBOX… */
   FROM_INBOX = x.row;              /* …οπότε η σύνδεση μπαίνει ΜΕΤΑ */
+  FROM_INBOX_ACCT = (x.account === A_CARD) ? A_CARD : A_BANK;
   setType(x.type === 'income' ? 'income' : 'expense');
   $('fAmt').value = String(x.amount);
   $('fDesc').value = x.description || '';
@@ -2669,8 +2677,7 @@ function renderList(items){
     const pay  = it.kind === 'cardpay';
     /* Στην προβολή «Όλα» πρέπει να ξεχωρίζει από πού έφυγαν τα λεφτά·
        μέσα σε έναν λογαριασμό η ένδειξη θα ήταν θόρυβος. */
-    const tag  = pay ? ' · πληρωμή κάρτας'
-               : (ACCT === A_ALL && it.account === A_CARD) ? ' · κάρτα' : '';
+    const tag  = pay ? ' · πληρωμή κάρτας' : '';
     /* Ο σβηστός διακόπτης φαίνεται, αλλιώς απορείς γιατί το ποσό λείπει
        από τις κατηγορίες. */
     const off  = (it.type === 'expense' && it.noStat) ? ' · εκτός εξόδων' : '';
@@ -2747,6 +2754,7 @@ function openNew(){
   $('fAmt').value = ''; $('fDesc').value = '';
   $('fDate').value = new Date().toISOString().slice(0,10);
   FROM_INBOX = null;
+  FROM_INBOX_ACCT = null;
   /* Προεπιλογή: η κίνηση ΜΕΤΡΑΕΙ στα έξοδα. NO_STAT=false σημαίνει ακριβώς
      αυτό — ο διακόπτης εμφανίζεται αναμμένος. */
   setFixed(false); setNoStat(false);
@@ -2883,9 +2891,10 @@ function collect(){
     amount: $('fAmt').value,
     fixed: TYPE === 'expense' && IS_FIXED,
     noStat: TYPE === 'expense' && NO_STAT,
-    /* Στην προβολή «Όλα» δεν ξέρουμε τι εννοεί ο χρήστης — γράφουμε τράπεζα,
-       που είναι και η ασφαλής προεπιλογή του backend. */
-    account: isCard() ? A_CARD : A_BANK,
+    /* Ειδοποίηση της κάρτας: ο λογαριασμός της κίνησης βγαίνει από την ΙΔΙΑ
+       την ειδοποίηση, όχι από το ποια καρτέλα τυχαίνει να βλέπεις. Αλλιώς μια
+       αλλαγή προβολής πριν την αποθήκευση θα την έστελνε σε λάθος λογαριασμό. */
+    account: FROM_INBOX_ACCT || (isCard() ? A_CARD : A_BANK),
     inboxRow: FROM_INBOX || undefined
   };
   if(!e.category){ toast('Διάλεξε κατηγορία', true); return null; }
@@ -2914,7 +2923,7 @@ function syncing(on){
 /** Εφαρμόζει τοπικά μια νέα κίνηση. Επιστρέφει συνάρτηση αναίρεσης. */
 function applyLocalAdd(entry){
   const amount = Number(entry.amount);
-  const inAcctView = (ACCT === A_ALL) || (entry.account || A_BANK) === ACCT;
+  const inAcctView = (entry.account || A_BANK) === ACCT;
   const inView = VIEW && entry.date >= VIEW.from && entry.date <= VIEW.to && inAcctView;
   const passesFilter = !FILTER.length || (entry.type === 'expense' && FILTER.indexOf(entry.category) !== -1);
 

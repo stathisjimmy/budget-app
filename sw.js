@@ -1,5 +1,5 @@
 /* Προϋπολογισμός — service worker (offline app shell) */
-const CACHE = 'proyp-v27';   /* v27: διαχωρισμός τραπεζικού λογαριασμού και πιστωτικής κάρτας */
+const CACHE = 'proyp-v28';   /* v28: δύο λογαριασμοί· λογαριασμός ορατός στην ουρά */
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
