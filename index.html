@@ -79,6 +79,16 @@ button{font-family:var(--f);cursor:pointer;border:0;color:inherit}
 @keyframes blink{50%{opacity:.2}}
 
 /* ── Μπάρα ενεργού φίλτρου ── */
+/* ── Επιλογέας λογαριασμού (v27) ── */
+.accts{display:flex;gap:6px;background:var(--sur);border:1px solid var(--hair);
+  border-radius:100px;padding:4px;margin-bottom:22px}
+.accts button{flex:1;padding:9px 6px;border:0;border-radius:100px;background:transparent;
+  color:var(--dim);font-family:var(--f);font-size:.82rem;font-weight:300;cursor:pointer;
+  transition:background .15s,color .15s;white-space:nowrap}
+.accts button.on{background:var(--sur-2);color:var(--fg);font-weight:400}
+.accts .abadge{display:inline-block;margin-inline-start:5px;font-size:.7rem;color:var(--clay)}
+.hero.card .bal{color:var(--clay)}
+
 .fbar{display:none;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:20px}
 .fbar.on{display:flex}
 .ftag{display:flex;align-items:center;gap:7px;padding:7px 12px;border-radius:100px;
@@ -612,6 +622,12 @@ input[type=date]{color-scheme:dark}
 
   <div class="fbar" id="fbar"></div>
 
+  <div class="accts" id="accts" role="tablist" aria-label="Λογαριασμός">
+    <button id="acctBank" onclick="setAcct('τράπεζα')" role="tab">Τράπεζα</button>
+    <button id="acctCard" onclick="setAcct('κάρτα')" role="tab">Κάρτα</button>
+    <button id="acctAll"  onclick="setAcct('all')"    role="tab">Όλα</button>
+  </div>
+
   <div class="cols">
    <div class="colA">
   <section class="hero" id="hero">
@@ -696,10 +712,10 @@ input[type=date]{color-scheme:dark}
   </div>
   <div class="toggle" id="statRow">
     <span class="tx">
-      <span class="tt">Εκτός στατιστικής</span>
-      <span class="ts">Μετράει κανονικά στο υπόλοιπο, αλλά δεν επηρεάζει τους μέσους όρους στη Στατιστική περιόδου.</span>
+      <span class="tt" id="statTitle">Μετράει στα έξοδα</span>
+      <span class="ts" id="statSub">Μετράει κανονικά στις κατηγορίες, στα φίλτρα και στις αναφορές. Σβηστό: επηρεάζει μόνο το υπόλοιπο.</span>
     </span>
-    <button class="sw" id="statSw" onclick="toggleNoStat()" aria-label="Εκτός στατιστικής"></button>
+    <button class="sw" id="statSw" onclick="toggleNoStat()" aria-label="Μετράει στα έξοδα"></button>
   </div>
 
   <button class="save" id="saveBtn" onclick="save()">Καταχώρηση</button>
@@ -1019,6 +1035,17 @@ const MSHORT = ['Ιαν','Φεβ','Μάρ','Απρ','Μάι','Ιούν','Ιού�
 
 let CATS = {expense:[],income:[]}, FIXED = [], ITEMS = [], BYCAT = [], MONTH = null, SUMMARY = null;
 let TYPE = 'expense', CAT = '', IS_FIXED = false, NO_STAT = false;
+
+/* ── Λογαριασμός (v27) ──
+   Προεπιλογή: τραπεζικός. Ό,τι υπήρχε πριν τη v27 είναι τραπεζικές κινήσεις,
+   οπότε ανοίγοντας την εφαρμογή βλέπεις ακριβώς ό,τι έβλεπες πάντα. */
+const A_BANK = 'τράπεζα', A_CARD = 'κάρτα', A_ALL = 'all';
+let ACCT = (function(){
+  try{ const v = localStorage.getItem('acct');
+       return (v === A_CARD || v === A_ALL) ? v : A_BANK; }
+  catch(e){ return A_BANK; }
+})();
+const isCard = () => ACCT === A_CARD;
 let EDIT = null;
 let VIEW = null;
 let FILTER = [];        // ενεργό φίλτρο κατηγοριών
@@ -1065,7 +1092,7 @@ async function api(action, extra){
   if(!CFG.url) throw new Error('Δεν έχει ρυθμιστεί σύνδεση.');
   // Βάση: η περίοδος και το φίλτρο που βλέπει ο χρήστης.
   // Το extra μπορεί να τα ΠΑΡΑΚΑΜΨΕΙ — η αναφορά έχει δικό της μήνα/κατηγορίες.
-  const body = { action: action, token: CFG.token, cats: FILTER };
+  const body = { action: action, token: CFG.token, cats: FILTER, acct: ACCT };
   if(VIEW){ body.from = VIEW.from; body.to = VIEW.to; }
   Object.assign(body, extra || {});
 
@@ -1192,7 +1219,7 @@ function status(k){ $('dot').className = 'dot ' + k; }
 const SNAP_MAX = 8;   // πόσες περιόδους κρατάμε
 
 function snapKey(){
-  return 'snap:' + VIEW.from + '|' + VIEW.to + '|' + FILTER.slice().sort().join(',');
+  return 'snap:' + ACCT + '|' + VIEW.from + '|' + VIEW.to + '|' + FILTER.slice().sort().join(',');
 }
 function snapRead(){
   try{ return JSON.parse(localStorage.getItem(snapKey()) || 'null'); }
@@ -1212,7 +1239,7 @@ function snapWrite(d){
 }
 
 /* ── Boot ── */
-const APPVER = 'v26a';
+const APPVER = 'v27';
 
 function boot(){
   try{ $('vStamp').textContent = APPVER; }catch(e){}
@@ -1220,6 +1247,9 @@ function boot(){
   $('app').hidden = false; $('actions').hidden = false;
   const n = new Date();
   VIEW = monthView(n.getFullYear(), n.getMonth());
+  /* Πριν από κάθε δεδομένο: αλλιώς ο επιλογέας μένει χωρίς επιλεγμένη θέση
+     όσο τρέχει το πρώτο init, και φαίνεται χαλασμένος. */
+  try{ renderAccts(); }catch(e){}
   refresh(); flushQueue();
 }
 function saveSetup(){
@@ -1276,6 +1306,7 @@ function paint(d){
   try{ if(d.summary) render(d.summary); }catch(e){ fail.push('σύνοψη: ' + e.message); }
   try{ renderList(d.recent); }catch(e){ fail.push('κινήσεις: ' + e.message); }
   try{ renderFilterBar(); }catch(e){ fail.push('φίλτρο: ' + e.message); }
+  try{ renderAccts(); }catch(e){ fail.push('λογαριασμός: ' + e.message); }
   try{ renderAlert(); }catch(e){ fail.push('ειδοποίηση: ' + e.message); }
 
   try{ syncMenuLabels(); renderInboxBadge();
@@ -1290,6 +1321,24 @@ function paint(d){
 }
 
 /* ── Μενού ── */
+/* ── Επιλογέας λογαριασμού (v27) ── */
+function renderAccts(){
+  $('acctBank').classList.toggle('on', ACCT === A_BANK);
+  $('acctCard').classList.toggle('on', ACCT === A_CARD);
+  $('acctAll').classList.toggle('on',  ACCT === A_ALL);
+  $('hero').classList.toggle('card', isCard());
+}
+
+function setAcct(a){
+  if(ACCT === a) return;
+  ACCT = a;
+  try{ localStorage.setItem('acct', a); }catch(e){}
+  renderAccts();
+  /* Η φόρμα μπορεί να είναι ανοιχτή με λάθος πλέον ετικέτες. */
+  try{ syncFormLabels(); }catch(e){}
+  refresh();
+}
+
 /* ── Εισερχόμενα: ουρά επιβεβαίωσης (v25) ──
    Η εφαρμογή αυτοματισμού στέλνει το κείμενο της ειδοποίησης· εδώ το
    βλέπεις, διαλέγεις κατηγορία και αποθηκεύεις. Ποτέ αυτόματη εγγραφή. */
@@ -1340,6 +1389,12 @@ function fillFromInbox(i){
   if(!x) return;
 
   closeAll();
+
+  /* Ειδοποίηση της κάρτας ενώ βλέπεις τράπεζα: γύρνα ΠΡΩΤΑ την προβολή, ώστε
+     η φόρμα να ανοίξει με τις σωστές ετικέτες και η εγγραφή να πάει στον
+     σωστό λογαριασμό. Το setAcct κάνει refresh, που δεν μας ενοχλεί εδώ. */
+  if(x.account === A_CARD && ACCT !== A_CARD) setAcct(A_CARD);
+
   openNew();                       /* το openNew μηδενίζει το FROM_INBOX… */
   FROM_INBOX = x.row;              /* …οπότε η σύνδεση μπαίνει ΜΕΤΑ */
   setType(x.type === 'income' ? 'income' : 'expense');
@@ -2424,11 +2479,16 @@ function render(s){
   const filtered = !!s.filtered;
 
   $('kicker').textContent = filtered ? 'Σύνολο επιλεγμένων κατηγοριών'
+    : isCard() ? 'Οφειλή κάρτας'
     : (s.carryover !== undefined ? 'Διαθέσιμο υπόλοιπο' : 'Υπόλοιπο');
   const b = $('bal');
-  const shown = filtered ? s.expense
+  let shown = filtered ? s.expense
     : (s.runningBalance !== undefined ? s.runningBalance : s.balance);
-  b.classList.toggle('neg', !filtered && shown < 0);
+  /* Στην κάρτα το νούμερο είναι ΟΦΕΙΛΗ, οπότε το δείχνουμε θετικό: «χρωστάς
+     85 €» διαβάζεται καλύτερα από «−85 €». Το πρόσημο μένει ακέραιο μέσα
+     στους υπολογισμούς — αντιστρέφεται μόνο εδώ, στην εμφάνιση. */
+  if(!filtered && isCard()) shown = -shown;
+  b.classList.toggle('neg', !filtered && (isCard() ? shown > 0 : shown < 0));
   b.classList.toggle('sum', filtered);
   b.textContent = eur(shown);
 
@@ -2440,10 +2500,10 @@ function render(s){
     $('v2').textContent = eur(s.expenseAll);
     $('v2').className = 'v out num';
   }else{
-    $('k1').textContent = 'Έσοδα μήνα';
+    $('k1').textContent = isCard() ? 'Πληρωμές' : 'Έσοδα μήνα';
     $('v1').textContent = eur(s.income);
     $('v1').className = 'v in num';
-    $('k2').textContent = 'Έξοδα μήνα';
+    $('k2').textContent = isCard() ? 'Χρεώσεις' : 'Έξοδα μήνα';
     $('v2').textContent = eur(s.expenseAll !== undefined ? s.expenseAll : s.expense);
     $('v2').className = 'v out num';
   }
@@ -2606,11 +2666,19 @@ function renderList(items){
   }
   el.innerHTML = ITEMS.map((it,i)=>{
     const d = String(it.date || '--').split('-');
+    const pay  = it.kind === 'cardpay';
+    /* Στην προβολή «Όλα» πρέπει να ξεχωρίζει από πού έφυγαν τα λεφτά·
+       μέσα σε έναν λογαριασμό η ένδειξη θα ήταν θόρυβος. */
+    const tag  = pay ? ' · πληρωμή κάρτας'
+               : (ACCT === A_ALL && it.account === A_CARD) ? ' · κάρτα' : '';
+    /* Ο σβηστός διακόπτης φαίνεται, αλλιώς απορείς γιατί το ποσό λείπει
+       από τις κατηγορίες. */
+    const off  = (it.type === 'expense' && it.noStat) ? ' · εκτός εξόδων' : '';
     return '<div class="item' + (it.pending ? ' pend' : '') + '">'
       + '<span class="tick ' + (it.type==='income'?'in':'') + '"></span>'
       + '<span class="txt">'
         + '<span class="t1">' + esc(it.description || it.category) + (it.fixed ? PIN : '') + '</span>'
-        + '<span class="t2">' + esc(it.category) + ' · ' + d[2] + '.' + d[1] + '</span>'
+        + '<span class="t2">' + esc(it.category) + ' · ' + d[2] + '.' + d[1] + tag + off + '</span>'
       + '</span>'
       + '<span class="amt num ' + (it.type==='income'?'in':'out') + '">'
         + (it.type==='income'?'+':'−') + n2(it.amount) + ' €</span>'
@@ -2679,8 +2747,11 @@ function openNew(){
   $('fAmt').value = ''; $('fDesc').value = '';
   $('fDate').value = new Date().toISOString().slice(0,10);
   FROM_INBOX = null;
+  /* Προεπιλογή: η κίνηση ΜΕΤΡΑΕΙ στα έξοδα. NO_STAT=false σημαίνει ακριβώς
+     αυτό — ο διακόπτης εμφανίζεται αναμμένος. */
   setFixed(false); setNoStat(false);
   setType('expense');
+  syncFormLabels();
   openSheet('sheet');
 }
 function openEdit(i){
@@ -2697,6 +2768,7 @@ function openEdit(i){
   $('fDate').value = it.date;
   setFixed(!!it.fixed);
   setNoStat(!!it.noStat);
+  syncFormLabels();
   openSheet('sheet');
 }
 function openSheet(id){ $('scrim').classList.add('on'); $(id).classList.add('on'); }
@@ -2712,10 +2784,13 @@ function setType(t){
   TYPE = t;
   $('tE').classList.toggle('on', t==='expense');
   $('tI').classList.toggle('on', t==='income');
-  $('fixRow').style.display = (t==='expense') ? 'flex' : 'none';
+  /* Πάγιο έξοδο δεν έχει νόημα σε χρέωση κάρτας. */
+  $('fixRow').style.display = (t==='expense' && !isCard()) ? 'flex' : 'none';
   /* Η σημαία αφορά μόνο έξοδα: η στατιστική περιόδου μετράει έξοδα. */
   $('statRow').style.display = (t==='expense') ? 'flex' : 'none';
   if(t !== 'expense'){ setFixed(false); setNoStat(false); }
+  if(isCard()) setFixed(false);
+  try{ syncFormLabels(); }catch(e){}
 
   const list = (t==='expense' ? CATS.expense : CATS.income);
   CAT = list[0] || '';
@@ -2742,8 +2817,23 @@ function pickCat(c){
 }
 function setFixed(v){ IS_FIXED = !!v; $('fixSw').classList.toggle('on', IS_FIXED); }
 function toggleFixed(){ setFixed(!IS_FIXED); }
-function setNoStat(v){ NO_STAT = !!v; $('statSw').classList.toggle('on', NO_STAT); }
+/* ΠΡΟΣΟΧΗ ΣΤΟ ΠΡΟΣΗΜΟ (v27): στο Sheet η στήλη E σημαίνει «ΕΚΤΟΣ στατιστικής»
+   και έμεινε ως έχει, ώστε να μη χρειαστεί migration. Ο διακόπτης όμως λέει
+   «μετράει στα έξοδα», δηλαδή είναι η ΑΝΤΙΣΤΡΟΦΗ τιμή. Η μετατροπή γίνεται
+   μόνο εδώ, σε ένα σημείο. */
+function setNoStat(v){ NO_STAT = !!v; $('statSw').classList.toggle('on', !NO_STAT); }
 function toggleNoStat(){ setNoStat(!NO_STAT); }
+
+/* Οι ετικέτες της φόρμας εξαρτώνται από τον λογαριασμό που βλέπεις. */
+function syncFormLabels(){
+  const card = isCard();
+  $('tE').textContent = card ? 'Χρέωση κάρτας' : 'Έξοδο';
+  $('tI').textContent = card ? 'Πληρωμή κάρτας' : 'Έσοδο';
+  /* Η πληρωμή κάρτας είναι μεταφορά, όχι έσοδο: δεν έχει κατηγορία εξόδου
+     και δεν παίρνει ποτέ διακόπτη στατιστικής. */
+  $('statRow').style.display = (TYPE === 'expense') ? 'flex' : 'none';
+  $('fixRow').style.display  = (TYPE === 'expense' && !card) ? 'flex' : 'none';
+}
 
 /* ── Σκανάρισμα ── */
 function pickPhoto(){ $('file').click(); }
@@ -2793,6 +2883,9 @@ function collect(){
     amount: $('fAmt').value,
     fixed: TYPE === 'expense' && IS_FIXED,
     noStat: TYPE === 'expense' && NO_STAT,
+    /* Στην προβολή «Όλα» δεν ξέρουμε τι εννοεί ο χρήστης — γράφουμε τράπεζα,
+       που είναι και η ασφαλής προεπιλογή του backend. */
+    account: isCard() ? A_CARD : A_BANK,
     inboxRow: FROM_INBOX || undefined
   };
   if(!e.category){ toast('Διάλεξε κατηγορία', true); return null; }
@@ -2821,7 +2914,8 @@ function syncing(on){
 /** Εφαρμόζει τοπικά μια νέα κίνηση. Επιστρέφει συνάρτηση αναίρεσης. */
 function applyLocalAdd(entry){
   const amount = Number(entry.amount);
-  const inView = VIEW && entry.date >= VIEW.from && entry.date <= VIEW.to;
+  const inAcctView = (ACCT === A_ALL) || (entry.account || A_BANK) === ACCT;
+  const inView = VIEW && entry.date >= VIEW.from && entry.date <= VIEW.to && inAcctView;
   const passesFilter = !FILTER.length || (entry.type === 'expense' && FILTER.indexOf(entry.category) !== -1);
 
   const snapItems = ITEMS.slice();
@@ -2834,6 +2928,11 @@ function applyLocalAdd(entry){
       /* Ψηλό row ώστε να κάθεται στην κορυφή της ημέρας του μέχρι να
          επιβεβαιωθεί· το αρνητικό θα το έστελνε στο τέλος. */
       type: entry.type, row: 1e9, date: entry.date,
+      account: entry.account || A_BANK,
+      /* Ίδια λογική με το backend: γραμμή Εσόδων στην κάρτα ΕΙΝΑΙ πληρωμή
+         κάρτας, όχι έσοδο — αλλιώς για 2-4 δευτερόλεπτα η λίστα θα έλεγε
+         ψέματα μέχρι να έρθει η αληθινή απάντηση. */
+      kind: (entry.type === 'income' && entry.account === A_CARD) ? 'cardpay' : entry.type,
       category: entry.category, description: entry.description || '',
       amount: amount, fixed: !!entry.fixed, noStat: !!entry.noStat, pending: true
     });
@@ -2846,7 +2945,7 @@ function applyLocalAdd(entry){
       s.income = (s.income || 0) + amount;
     }else{
       s.expenseAll = (s.expenseAll || 0) + amount;
-      if(passesFilter) s.expense = (s.expense || 0) + amount;
+      if(passesFilter && !entry.noStat) s.expense = (s.expense || 0) + amount;
     }
     s.balance = (s.income || 0) - (s.expense || 0);
     if(s.runningBalance !== undefined){
@@ -2854,12 +2953,12 @@ function applyLocalAdd(entry){
     }
     s.count = (s.count || 0) + 1;
 
-    if(entry.type === 'expense' && Array.isArray(s.daily)){
+    if(entry.type === 'expense' && !entry.noStat && Array.isArray(s.daily)){
       const i = Math.round((new Date(entry.date) - new Date(s.from)) / 86400000);
       if(i >= 0 && i < s.daily.length) s.daily[i] += amount;
     }
 
-    if(entry.type === 'expense'){
+    if(entry.type === 'expense' && !entry.noStat){
       const hit = BYCAT.find(x => x.category === entry.category);
       if(hit) hit.amount += amount;
       else BYCAT.push({ category: entry.category, amount: amount });
