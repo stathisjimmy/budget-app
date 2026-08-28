@@ -1218,30 +1218,105 @@ function status(k){ $('dot').className = 'dot ' + k; }
  * χρειάζεται να τον περιμένει: δείχνουμε ΑΜΕΣΩΣ ό,τι είδαμε τελευταία φορά,
  * και ανανεώνουμε στο παρασκήνιο. Η οθόνη γεμίζει σε 0ms αντί για 5s.
  */
-const SNAP_MAX = 8;   // πόσες περιόδους κρατάμε
+const SNAP_MAX = 8;   // πόσες περιόδους κρατάμε ΑΝΑ ΛΟΓΑΡΙΑΣΜΟ
 
-function snapKey(){
-  return 'snap:' + ACCT + '|' + VIEW.from + '|' + VIEW.to + '|' + FILTER.slice().sort().join(',');
+/* Το κλειδί δέχεται λογαριασμό, ώστε να μπορούμε να γράψουμε στιγμιότυπο για
+   λογαριασμό που ΔΕΝ βλέπουμε αυτή τη στιγμή (προφόρτωση). */
+function snapKey(acct){
+  return 'snap:' + (acct || ACCT) + '|' + VIEW.from + '|' + VIEW.to + '|'
+       + FILTER.slice().sort().join(',');
 }
-function snapRead(){
-  try{ return JSON.parse(localStorage.getItem(snapKey()) || 'null'); }
+function snapRead(acct){
+  try{ return JSON.parse(localStorage.getItem(snapKey(acct)) || 'null'); }
   catch(e){ return null; }
 }
-function snapWrite(d){
-  try{
-    localStorage.setItem(snapKey(), JSON.stringify(d));
 
-    // Κράτα λίστα κλειδιών και πέταξε τα παλιά — το localStorage έχει όριο
-    const keys = JSON.parse(localStorage.getItem('snapKeys') || '[]')
-                   .filter(k => k !== snapKey());
-    keys.push(snapKey());
+/* ── Γιατί ΑΝΑ ΛΟΓΑΡΙΑΣΜΟ κλάδεμα ──
+   Με μία κοινή λίστα 8 κλειδιών, το να γυρίσεις τέσσερις μήνες στην τράπεζα
+   έδιωχνε ΟΛΑ τα στιγμιότυπα της κάρτας. Το επόμενο πάτημα στην «Κάρτα»
+   περίμενε ξανά το δίκτυο — δηλαδή η ταχύτητα χανόταν ακριβώς όταν αρχίζεις
+   να χρησιμοποιείς την εφαρμογή σοβαρά. Κάθε λογαριασμός κρατάει τη δική του
+   ουρά, οπότε ο ένας δεν πεινάει τον άλλον. */
+function snapWrite(d, acct){
+  const a = acct || ACCT;
+  const key = snapKey(a);
+  const listKey = 'snapKeys:' + a;
+
+  function store(){
+    localStorage.setItem(key, JSON.stringify(d));
+    const keys = JSON.parse(localStorage.getItem(listKey) || '[]').filter(k => k !== key);
+    keys.push(key);
     while(keys.length > SNAP_MAX) localStorage.removeItem(keys.shift());
-    localStorage.setItem('snapKeys', JSON.stringify(keys));
-  }catch(e){ /* γεμάτο localStorage — δεν είναι κρίσιμο */ }
+    localStorage.setItem(listKey, JSON.stringify(keys));
+  }
+
+  try{
+    store();
+  }catch(e){
+    /* Γεμάτο localStorage. Χωρίς αυτό το μονοπάτι, το στιγμιότυπο σταματούσε
+       σιωπηλά να γράφεται για πάντα και η εφαρμογή ξαναγινόταν αργή χωρίς
+       προφανή λόγο. Αδειάζουμε τα μισά παλιά και ξαναδοκιμάζουμε ΜΙΑ φορά. */
+    try{
+      [A_BANK, A_CARD].forEach(function(x){
+        const lk = 'snapKeys:' + x;
+        const ks = JSON.parse(localStorage.getItem(lk) || '[]');
+        const drop = ks.splice(0, Math.ceil(ks.length / 2));
+        drop.forEach(k => localStorage.removeItem(k));
+        localStorage.setItem(lk, JSON.stringify(ks));
+      });
+      store();
+    }catch(e2){ /* παραιτούμαστε — η εφαρμογή δουλεύει, απλώς πιο αργά */ }
+  }
+}
+
+/* Καθαρισμός της παλιάς ΕΝΙΑΙΑΣ λίστας της v26. Τρέχει μία φορά· χωρίς αυτό
+   τα κλειδιά της έμεναν για πάντα στο localStorage χωρίς κανέναν να τα σβήνει. */
+function snapMigrate(){
+  try{
+    const old = localStorage.getItem('snapKeys');
+    if(old === null) return;
+    JSON.parse(old).forEach(k => localStorage.removeItem(k));
+    localStorage.removeItem('snapKeys');
+  }catch(e){ try{ localStorage.removeItem('snapKeys'); }catch(e2){} }
+}
+
+/* ── Προφόρτωση του άλλου λογαριασμού (v29) ──
+ *
+ * Η ταχύτητα της αρχικής οθόνης έρχεται από το τοπικό στιγμιότυπο: ζωγραφίζουμε
+ * ό,τι ξέραμε ήδη και ανανεώνουμε στο παρασκήνιο. Με δύο λογαριασμούς αυτό
+ * κάλυπτε μόνο αυτόν που έτυχε να βλέπεις — το πρώτο πάτημα στον άλλον
+ * περίμενε ξανά 2-4 δευτερόλεπτα.
+ *
+ * Εδώ, αφού ΤΕΛΕΙΩΣΕΙ η κανονική ανανέωση, ζητάμε αθόρυβα και τον άλλον
+ * λογαριασμό και γράφουμε ΜΟΝΟ στιγμιότυπο. Δεν αγγίζουμε οθόνη, ούτε INBOX,
+ * ούτε MONTH: αν το κάναμε, η αρχική θα άλλαζε νούμερα από μόνη της.
+ */
+let PREFETCHED = {};          /* ποιο κλειδί έχει ήδη προφορτωθεί σε αυτή τη συνεδρία */
+let T_PREFETCH = null;        /* πόσο έκανε, για τα Διαγνωστικά */
+
+async function prefetchOther(){
+  const other = isCard() ? A_BANK : A_CARD;
+  if(!VIEW) return;
+  const key = snapKey(other);
+  if(PREFETCHED[key]) return;              /* μία φορά ανά περίοδο/φίλτρο */
+  PREFETCHED[key] = true;
+
+  const t = nowMs();
+  try{
+    /* Το extra ΠΑΡΑΚΑΜΠΤΕΙ το acct του τρέχοντος λογαριασμού. */
+    const d = await api('init', { acct: other });
+    snapWrite(d, other);
+    T_PREFETCH = nowMs() - t;
+  }catch(e){
+    /* Αποτυχία εδώ δεν είναι σφάλμα: απλώς ο άλλος λογαριασμός θα φορτώσει
+       κανονικά όταν τον ζητήσεις. Ξεκλειδώνουμε για να ξαναδοκιμάσει. */
+    PREFETCHED[key] = false;
+    T_PREFETCH = null;
+  }
 }
 
 /* ── Boot ── */
-const APPVER = 'v28';
+const APPVER = 'v29';
 
 function boot(){
   try{ $('vStamp').textContent = APPVER; }catch(e){}
@@ -1252,6 +1327,7 @@ function boot(){
   /* Πριν από κάθε δεδομένο: αλλιώς ο επιλογέας μένει χωρίς επιλεγμένη θέση
      όσο τρέχει το πρώτο init, και φαίνεται χαλασμένος. */
   try{ renderAccts(); }catch(e){}
+  snapMigrate();
   refresh(); flushQueue();
 }
 function saveSetup(){
@@ -1286,6 +1362,9 @@ async function refresh(){
     T_PAINT = nowMs() - t2;
     snapWrite(d);
     status('');
+    /* Μετά την οθόνη, ποτέ πριν: η προφόρτωση δεν πρέπει να ανταγωνίζεται
+       το αίτημα που περιμένει ο χρήστης. */
+    setTimeout(prefetchOther, 400);
   }catch(e){
     T_NET = nowMs() - t1;
     LASTERR = e.message;
@@ -1525,6 +1604,13 @@ function diagLines(){
     ['Κλήση init (δίκτυο)', T_NET == null ? '—' : (ms(T_NET) + (T_NET > 4000 ? '  ⚠ αργό' : ''))],
     ['Σχεδίαση απάντησης', ms(T_PAINT)],
     ['Αποθηκευμένο στιγμιότυπο', (()=>{ try{ return localStorage.getItem(snapKey()) ? 'ναι' : 'όχι'; }catch(e){ return '—'; } })()],
+    ['Άλλος λογαριασμός προφορτωμένος', (()=>{
+        try{
+          const other = isCard() ? A_BANK : A_CARD;
+          const has = !!localStorage.getItem(snapKey(other));
+          return (has ? 'ναι' : 'όχι') + (T_PREFETCH == null ? '' : ' · ' + ms(T_PREFETCH));
+        }catch(e){ return '—'; }
+      })()],
     ['ITEMS στη μνήμη', String(ITEMS.length)],
     ['Γραμμές στη λίστα', String(document.querySelectorAll('#list .item').length)],
     ['Τελευταίο σφάλμα', LASTERR || 'κανένα']
