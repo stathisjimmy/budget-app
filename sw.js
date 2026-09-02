@@ -1,5 +1,5 @@
 /* Προϋπολογισμός — service worker (offline app shell) */
-const CACHE = 'proyp-v29';   /* v29: στιγμιότυπο ανά λογαριασμό + προφόρτωση του άλλου */
+const CACHE = 'proyp-v30';   /* v30: καταγραφή εισερχόμενων ειδοποιήσεων */
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

@@ -1316,7 +1316,7 @@ async function prefetchOther(){
 }
 
 /* ── Boot ── */
-const APPVER = 'v29';
+const APPVER = 'v30';
 
 function boot(){
   try{ $('vStamp').textContent = APPVER; }catch(e){}
@@ -1617,6 +1617,41 @@ function diagLines(){
   ];
 }
 
+/* ── Καταγραφή ειδοποιήσεων (v30) ──
+   Ζητάει από τον server τις τελευταίες απόπειρες. Το ΚΕΝΟ αποτέλεσμα είναι
+   πληροφορία, όχι αποτυχία: σημαίνει ότι κανένα αίτημα δεν έφτασε ποτέ, άρα
+   το πρόβλημα είναι στο κινητό ή στο URL — όχι εδώ. */
+async function loadHookLog(){
+  const box = $('hookLog');
+  box.innerHTML = '<div class="st"><span class="sk">Φόρτωση…</span></div>';
+  try{
+    const d = await api('hookLog', { n: 25 });
+    const es = d.entries || [];
+    if(!es.length){
+      box.innerHTML = '<div class="st"><span class="sk">Καμία απόπειρα καταγεγραμμένη</span>'
+        + '<span class="sv up" style="max-width:62%;text-align:right;white-space:normal">'
+        + 'κανένα αίτημα δεν έφτασε στον server</span></div>';
+      return;
+    }
+    box.innerHTML = '<div class="st"><span class="sk">Σύνολο καταγραφών</span>'
+      + '<span class="sv">' + d.total + '</span></div>'
+      + es.map(function(x){
+          const t = new Date(x.when);
+          const when = isNaN(t) ? x.when
+            : (String(t.getDate()).padStart(2,'0') + '.' + String(t.getMonth()+1).padStart(2,'0')
+               + ' ' + String(t.getHours()).padStart(2,'0') + ':' + String(t.getMinutes()).padStart(2,'0'));
+          const bad = x.result !== 'καταχωρήθηκε';
+          return '<div class="st"><span class="sk">' + esc(when) + ' · ' + esc(x.result) + '</span>'
+            + '<span class="sv' + (bad ? ' up' : '') + '" style="max-width:62%;text-align:right;white-space:normal">'
+            + esc(x.message || x.text || '') + '</span></div>';
+        }).join('');
+  }catch(e){
+    box.innerHTML = '<div class="st"><span class="sk">Σφάλμα</span>'
+      + '<span class="sv up" style="max-width:62%;text-align:right;white-space:normal">'
+      + esc(e.message) + '</span></div>';
+  }
+}
+
 function openDiag(){
   $('gBody').innerHTML = diagLines().map(r=>{
     if(r.head) return '<div class="lbl" style="margin-top:20px">' + esc(r.head) + '</div>';
@@ -1624,7 +1659,10 @@ function openDiag(){
     return '<div class="st"><span class="sk">' + esc(r[0]) + '</span>'
       + '<span class="sv' + (/⚠/.test(v) ? ' up' : '') + '" style="max-width:62%;text-align:right;white-space:normal">'
       + esc(v) + '</span></div>';
-  }).join('');
+  }).join('')
+  + '<div class="lbl" style="margin-top:20px">Ειδοποιήσεις από το κινητό</div>'
+  + '<div id="hookLog"></div>'
+  + '<button class="save" style="margin-top:14px" onclick="loadHookLog()">Φόρτωση καταγραφής</button>';
   openSheet('gSheet');
 }
 
